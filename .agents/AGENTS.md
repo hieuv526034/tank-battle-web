@@ -36,7 +36,7 @@
 
 ## Kiến trúc hiện chọn
 
-- Spring Boot 3.5.16; Gradle Wrapper 8.14.6 (Groovy DSL); H2 file chỉ dành local; Flyway quản lý schema.
+- Spring Boot 3.5.16; Gradle Wrapper 8.14.6 (Groovy DSL); ứng dụng chỉ có prod/PostgreSQL, mặc định prod. Đã bỏ application-local.yml và seed demo local theo yêu cầu mới nhất. H2 chỉ testRuntimeOnly; Flyway quản lý schema. Không đưa H2/local hoặc cờ -Pproduction trở lại runtime.
 - JPA cho CRUD entity; JDBC cho projection/khóa/batch. JDBC write cần cập nhật audit tương ứng và tránh đọc entity cũ trong cùng persistence context.
 - API `/api/**` dùng Bearer JWT; trang Thymeleaf dùng session/form/OIDC. Không đưa JWT vào query string.
 - Refresh trong cookie HttpOnly; endpoint dùng cookie có CSRF; không tắt CSRF toàn bộ.
@@ -58,6 +58,6 @@
 - Toàn bộ hướng dẫn đầy đủ, trạng thái và tài liệu luồng nằm trong .agents; AGENTS.md ở gốc chỉ trỏ tới đây để AI tự tìm thấy khi clone sang nơi khác.
 - Backend chỉ cần JDK 21/Gradle; không tạo lại package.json, Node tests hoặc Prettier. Kiểm tra hợp đồng source bằng SourceContractTest trong src/test/java.
 - tools chứa script đang dùng cho PostgreSQL/CI/Render; dữ liệu sinh ra đặt dưới build, không tạo .tools.
-- Bootstrap admin chạy sau Flyway V6 với guard DB; không đổi mật khẩu hoặc tự nâng quyền tài khoản trùng username. Production cần BOOTSTRAP_ADMIN_PASSWORD khi tạo lần đầu; local có mật khẩu demo trong application-local.yml.
-- Database production neondb, schema tank_battle: Flyway/history, Hibernate và JDBC phải thống nhất schema. App/Flyway hiện dùng direct endpoint + Hikari pool 5; không dựa vào SET search_path của Neon pooler. Test không dùng Neon.
+- Bootstrap admin chạy sau Flyway V6 với guard DB; không đổi mật khẩu hoặc tự nâng quyền tài khoản trùng username. BOOTSTRAP_ADMIN_PASSWORD bắt buộc khi tạo lần đầu; không có mật khẩu mặc định cho ứng dụng. Test có cấu hình/DB riêng trong src/test.
+- Database production neondb, schema tank_battle: Flyway/history, Hibernate default_schema và Hikari schema phải thống nhất tank_battle. App/Flyway hiện dùng direct endpoint + Hikari pool 5; không dựa vào SET search_path của Neon pooler. Test không dùng Neon.
 - Giữ riêng quyền ADMIN trên /api/admin/**; cấu hình gameplay hiện ở JSON, chưa có màn hình/API CRUD quản trị catalog.

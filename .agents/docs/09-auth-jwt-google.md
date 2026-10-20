@@ -48,7 +48,7 @@ Access TTL mặc định 5 phút, refresh family tối đa 7 ngày, cấu hình 
 
 Decoder cố định RS256, kiểm tra chữ ký/issuer/thời gian, audience và claim bắt buộc, sau đó một lookup theo sid + userId để kiểm tra phiên còn hiệu lực và user enabled. Cơ chế này có đọc DB trên mỗi request API nhằm thu hồi access ngay từ request tiếp theo; chưa phải JWT hoàn toàn không trạng thái và chưa có kết quả đo tải.
 
-Production cần cặp RSA PEM ổn định: private PKCS#8 và public X.509, truyền bằng JWT_PRIVATE_KEY/JWT_PUBLIC_KEY dạng Spring resource location, ví dụ file:/run/secrets/jwt-private.pem. Không đưa key vào repository. Profile local cho phép sinh key tạm; restart làm access cũ mất hiệu lực. Refresh còn hạn trong DB có thể cấp access mới theo key hiện tại.
+Production cần cặp RSA PEM ổn định: private PKCS#8 và public X.509, truyền bằng JWT_PRIVATE_KEY/JWT_PUBLIC_KEY dạng Spring resource location, ví dụ file:/run/secrets/jwt-private.pem. Không đưa key vào repository. Profile test cho phép sinh key tạm; ứng dụng mặc định prod luôn yêu cầu PEM ổn định. Refresh còn hạn trong DB có thể cấp access mới theo key hiện tại.
 
 ## 5. Refresh và chống dùng lại
 
@@ -64,7 +64,7 @@ Chính sách nghiêm ngặt: hai request dùng cùng refresh có thể làm cả
 
 ## 6. Google
 
-webSecurity chỉ gọi oauth2Login khi có ClientRegistrationRepository. Local chưa dùng Google chỉ dùng local; Render chưa dùng Google chỉ dùng prod. Không thêm client giả để né lỗi startup. SecurityConfigTest kiểm cả hai nhánh; [tài liệu 22](22-github-render-cicd.md) hướng dẫn Render.
+webSecurity chỉ gọi oauth2Login khi có ClientRegistrationRepository. Ứng dụng chưa dùng Google chỉ dùng prod; thêm Google bằng prod,google. Không thêm client giả để né lỗi startup. SecurityConfigTest kiểm cả hai nhánh; [tài liệu 22](22-github-render-cicd.md) hướng dẫn Render.
 
 Chỉ bật khi profile google và GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET đã cấu hình:
 

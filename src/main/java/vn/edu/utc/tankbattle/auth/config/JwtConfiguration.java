@@ -10,11 +10,11 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
-import java.util.Arrays;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.dao.DataAccessException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -41,8 +41,8 @@ public class JwtConfiguration {
     /**
      * Chuẩn bị cặp khóa RSA dùng chung cho encoder/decoder khi ứng dụng khởi động. Nếu cấu hình
      * đường dẫn PEM thì đọc public key X509 và private key PKCS8, kiểm tra cùng modulus và tối
-     * thiểu 2048 bit. Chỉ local/test được tạo khóa tạm khi đã bật ephemeralKeys; prod thiếu khóa ổn
-     * định sẽ dừng khởi động để tránh đổi khóa sau mỗi lần restart.
+     * thiểu 2048 bit. Test được tạo khóa tạm khi đã bật ephemeralKeys; prod thiếu khóa ổn định sẽ
+     * dừng khởi động để tránh đổi khóa sau mỗi lần restart.
      *
      * @param properties cấu hình tank.auth, chứa đường dẫn resource và keyId
      * @param resources bộ đọc resource file/classpath của Spring
@@ -56,7 +56,8 @@ public class JwtConfiguration {
         RSAPrivateKey privateKey;
         boolean ephemeral = properties.privateKey().isBlank() || properties.publicKey().isBlank();
         if (ephemeral) {
-            boolean production = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+            // Bao gồm cả prod mặc định khi không truyền spring.profiles.active.
+            boolean production = environment.acceptsProfiles(Profiles.of("prod"));
             if (!properties.ephemeralKeys() || production) {
                 throw new IllegalStateException("Phải cấu hình JWT_PRIVATE_KEY và JWT_PUBLIC_KEY.");
             }

@@ -1,6 +1,6 @@
 # 24. Bootstrap admin và phân quyền
 
-Hệ thống cần tài khoản quản trị sau lần chạy đầu, tách với bốn người chơi mẫu local. Flyway V6 tạo hàng khóa BOOTSTRAP_ADMIN; ApplicationRunner tạo tài khoản sau khi schema sẵn sàng ở cả H2 và PostgreSQL.
+Hệ thống cần tài khoản quản trị sau lần chạy đầu. Flyway V6 tạo hàng khóa BOOTSTRAP_ADMIN; ApplicationRunner INSERT tài khoản thật vào users sau khi schema sẵn sàng. Ứng dụng chỉ chạy prod/PostgreSQL; H2 dành riêng cho test. Bộ tạo bốn người chơi mẫu local đã bỏ.
 
 ## Cấu hình
 
@@ -11,7 +11,7 @@ Hệ thống cần tài khoản quản trị sau lần chạy đầu, tách vớ
 | BOOTSTRAP_ADMIN_DISPLAY_NAME | Mặc định Quản trị hệ thống, qua validator tên chung. |
 | BOOTSTRAP_ADMIN_PASSWORD | 12–64 ký tự, chỉ dùng khi cần tạo tài khoản lần đầu. |
 
-Local không nạp .env tự động: mật khẩu mẫu nằm trong application-local.yml, có thể ghi đè bằng biến môi trường trước lần tạo đầu. Production không có mật khẩu cố định trong source/migration: đã bổ sung biến vào .env/render.env, xem giá trị trực tiếp trong file. Import lại cấu hình vào Render trước deploy phiên bản này. Không dùng admin/admin vì mật khẩu đó không đạt hợp đồng validation hiện tại.
+Ứng dụng không nạp .env tự động và không có mật khẩu mẫu trong cấu hình runtime. BOOTSTRAP_ADMIN_PASSWORD lấy từ môi trường; test có cấu hình/DB riêng trong src/test/resources/application-test.yml: đã bổ sung biến vào .env/render.env, xem giá trị trực tiếp trong file. Import lại cấu hình vào Render trước deploy phiên bản này. Không dùng admin/admin vì mật khẩu đó không đạt hợp đồng validation hiện tại.
 
 ## Luồng và transaction
 

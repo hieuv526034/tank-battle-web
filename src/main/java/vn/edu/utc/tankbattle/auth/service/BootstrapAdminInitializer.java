@@ -16,8 +16,8 @@ import vn.edu.utc.tankbattle.common.util.TextNormalizer;
 import vn.edu.utc.tankbattle.common.validation.ValidationRules;
 
 /**
- * Đảm bảo tài khoản quản trị đầu tiên sau Flyway ở cả local/prod. Đây là bootstrap hệ thống, tách
- * khỏi bốn tài khoản demo local. Không tự nâng USER lên ADMIN hoặc mở lại admin đã bị khóa.
+ * Đảm bảo tài khoản quản trị đầu tiên sau Flyway trong DB ứng dụng. Không tự nâng USER lên ADMIN
+ * hoặc mở lại admin đã bị khóa; test dùng DB và cấu hình riêng.
  */
 @Component
 @ConditionalOnProperty(prefix = "tank.bootstrap-admin", name = "enabled", havingValue = "true")

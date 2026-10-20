@@ -7,8 +7,8 @@ spring:
     encoding: UTF-8
     fallback-to-system-locale: false
   profiles:
-    # Chạy không chỉ định profile sẽ dùng H2 file local; prod phải chọn profile rõ ràng.
-    default: local
+    # Chỉ dùng môi trường prod; test tự chọn profile riêng trong src/test.
+    default: prod
   jackson:
     serialization:
       # Instant ra JSON dạng ISO-8601 UTC, tránh số timestamp mơ hồ về đơn vị.
@@ -93,7 +93,7 @@ tank:
     private-key: ${JWT_PRIVATE_KEY:}
     public-key: ${JWT_PUBLIC_KEY:}
     ephemeral-keys: false
-    # Local ghi đè false cho HTTP; production giữ true và cần HTTPS.
+    # Ứng dụng dùng HTTPS; test ghi đè false trong src/test/resources.
     secure-cookie: true
 springdoc:
   # OpenApiConfig bổ sung header ngôn ngữ/quyền; prod tắt cả spec và UI trong file profile.

@@ -15,7 +15,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @param keyId mã khóa đưa vào JWT header để nhận diện cặp RSA đang dùng
  * @param privateKey đường dẫn Spring Resource tới private PEM, ví dụ file:./secrets/private.pem
  * @param publicKey đường dẫn Spring Resource tới public PEM tương ứng
- * @param ephemeralKeys cho phép sinh cặp khóa tạm khi không cấu hình PEM; chỉ phù hợp local/test
+ * @param ephemeralKeys cho phép sinh cặp khóa tạm khi kiểm thử; prod luôn yêu cầu PEM ổn định
  * @param secureCookie cookie refresh chỉ được gửi qua HTTPS khi giá trị này là true
  */
 @ConfigurationProperties(prefix = "tank.auth")

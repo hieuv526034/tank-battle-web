@@ -60,7 +60,6 @@ $output = @(
     'JWT_KEY_ID=tank-v1',
     'DB_POOL_SIZE=5',
     'API_DOCS_ENABLED=true',
-    'LOCAL_DEMO_ENABLED=false',
     'BOOTSTRAP_ADMIN_ENABLED=true',
     ('BOOTSTRAP_ADMIN_USERNAME=' + $(if ($values['BOOTSTRAP_ADMIN_USERNAME']) { $values['BOOTSTRAP_ADMIN_USERNAME'] } else { 'admin' })),
     ('BOOTSTRAP_ADMIN_PASSWORD=' + $values['BOOTSTRAP_ADMIN_PASSWORD'])

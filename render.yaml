@@ -23,8 +23,6 @@ services:
         value: "10000"
       - key: DB_POOL_SIZE
         value: "5"
-      - key: LOCAL_DEMO_ENABLED
-        value: "false"
       - key: BOOTSTRAP_ADMIN_ENABLED
         value: "true"
       - key: BOOTSTRAP_ADMIN_USERNAME

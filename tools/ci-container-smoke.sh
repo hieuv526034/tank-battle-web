@@ -66,5 +66,31 @@ curl --silent --output "$key_dir/error.json" --write-out '%{http_code}' \
   | python3 -c 'import sys; assert sys.stdin.read() == "401"'
 python3 -c 'import json,sys; data=json.load(open(sys.argv[1])); assert data["code"]=="AUTH_001" and data["locale"]=="en"' "$key_dir/error.json"
 
+# Kiểm JDBC bằng luồng thật; health và Hibernate validate riêng chưa phát hiện sai search_path.
+# Cookie/token chỉ ở bộ nhớ process test, không in response đăng nhập vào log CI.
+python3 - <<'PY'
+import http.cookiejar
+import json
+import urllib.request
+
+base = "http://127.0.0.1:18080"
+client = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+
+def request(path, data=None, headers=None):
+    body = None if data is None else json.dumps(data).encode()
+    options = {"Content-Type": "application/json", **(headers or {})}
+    with client.open(urllib.request.Request(base + path, body, options), timeout=10) as response:
+        return json.load(response)["data"]
+
+csrf = request("/api/auth/csrf")
+login = request("/api/auth/login", {"username": "admin", "password": "BootstrapSmoke!2026"},
+                {"X-XSRF-TOKEN": csrf["token"]})
+authorization = {"Authorization": "Bearer " + login["accessToken"]}
+admin = request("/api/admin/me", headers=authorization)
+assert admin["role"] == "ADMIN" and admin["username"] == "admin", "Sai tài khoản/quyền bootstrap"
+assert request("/api/rooms", headers=authorization) == [], "DB smoke mới phải có danh sách phòng trống"
+print("CONTAINER_ADMIN_LOGIN_AND_ROOMS_OK")
+PY
+
 docker stop --time 30 "$container" >/dev/null
 echo "CONTAINER_PROD_PROFILE_SMOKE_OK"

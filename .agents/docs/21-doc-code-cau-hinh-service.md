@@ -47,7 +47,7 @@ Cấu hình giá trị nằm trong [application.yml](../../src/main/resources/ap
 
 Google đi qua [GoogleOidcUserService](../../src/main/java/vn/edu/utc/tankbattle/auth/service/GoogleOidcUserService.java) → [GoogleAccountService](../../src/main/java/vn/edu/utc/tankbattle/auth/service/GoogleAccountService.java). Định danh liên kết là provider + subject do OIDC xác thực; không tự gộp tài khoản local chỉ vì email giống nhau. Javadoc `resolve` giải thích cách xử lý hai callback cùng tạo tài khoản.
 
-[SocketTicketService](../../src/main/java/vn/edu/utc/tankbattle/auth/service/SocketTicketService.java) tạo vé ngẫu nhiên, ngắn hạn, dùng một lần cho handshake; không đưa access JWT vào URL. [LocalDemoSeeder](../../src/main/java/vn/edu/utc/tankbattle/auth/service/LocalDemoSeeder.java) chỉ phục vụ local tùy chọn, không chạy như một nghiệp vụ đăng ký mặc định ở production.
+[SocketTicketService](../../src/main/java/vn/edu/utc/tankbattle/auth/service/SocketTicketService.java) tạo vé ngẫu nhiên, ngắn hạn, dùng một lần cho handshake; không đưa access JWT vào URL. [BootstrapAdminInitializer](../../src/main/java/vn/edu/utc/tankbattle/auth/service/BootstrapAdminInitializer.java) INSERT admin sau Flyway khi chưa có, không reset mật khẩu. Profile và bộ seed demo local đã bỏ; ứng dụng mặc định prod/PostgreSQL.
 
 ## 4. Lần theo luồng phòng và bắt đầu trận
 

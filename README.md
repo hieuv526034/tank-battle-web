@@ -1,13 +1,14 @@
 # UTC Tank Battle Backend
 
-Backend Java 21, Spring Boot 3.5.16, Gradle Wrapper 8.14.6, Thymeleaf và PostgreSQL/H2. Package `vn.edu.utc.tankbattle`. UI/Canvas và offline browser chưa triển khai.
+Backend Java 21, Spring Boot 3.5.16, Gradle Wrapper 8.14.6, Thymeleaf và PostgreSQL. Ứng dụng chỉ dùng môi trường `prod`; H2 chỉ dành cho test. Package `vn.edu.utc.tankbattle`. UI/Canvas và offline browser chưa triển khai.
 
 ```powershell
 .\gradlew.bat clean build
-.\gradlew.bat bootRun "--args=--spring.profiles.active=local"
+# Sau khi nạp biến DB/JWT/admin; mặc định prod, khởi động sẽ chạy Flyway trên DB đã chọn.
+.\gradlew.bat bootRun
 ```
 
-JAR: `build/libs/tank-battle-web-1.0.0.jar`. Swagger local: `/swagger-ui.html`. H2 local lưu tại `.data`; không cần Node/npm. Linux/macOS dùng `./gradlew`.
+JAR: `build/libs/tank-battle-web-1.0.0.jar`, đóng gói bằng `bootJar` để bỏ qua test. Swagger `/swagger-ui.html` khi `API_DOCS_ENABLED=true`. Cần biến môi trường DB/JWT/admin trước khi chạy; Spring không tự đọc `.env`. Không cần Node/npm. Linux/macOS dùng `./gradlew`.
 
 Tài liệu, trạng thái kiểm chứng và hướng dẫn AI tiếp tục: [.agents/README.md](.agents/README.md). Deploy GitHub/Render: [.agents/docs/22-github-render-cicd.md](.agents/docs/22-github-render-cicd.md).
 

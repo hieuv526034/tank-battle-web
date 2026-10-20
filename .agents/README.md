@@ -35,11 +35,11 @@ Engine tick chỉ dùng RAM; checkpoint/kết toán ghi theo lô ngoài tick. JP
 .\gradlew.bat spotlessApply
 .\gradlew.bat clean build
 .\tools\test-postgres.ps1 -ProductionSmoke
-.\gradlew.bat bootRun "--args=--spring.profiles.active=local"
+.\gradlew.bat bootRun # Mặc định prod; cần biến DB/JWT/admin trước khi chạy.
 ```
 
-Chỉ cần JDK 21; Wrapper tải Gradle/dependency. Không có Node/npm trong backend. Báo cáo JUnit dưới build/reports/tests; log PostgreSQL/smoke ở build/verification. Dữ liệu local H2 trong .data, RSA trong secrets; không xóa hai thư mục này khi dọn build.
+Chỉ cần JDK 21; Wrapper tải Gradle/dependency. Không có Node/npm trong backend. Báo cáo JUnit dưới build/reports/tests; log PostgreSQL/smoke ở build/verification. Ứng dụng mặc định prod/PostgreSQL; H2 chỉ trong test. Dữ liệu H2 cũ trong .data và RSA trong secrets không bị xóa khi dọn build.
 
 Theo yêu cầu chủ đồ án, .env/render.env được phép commit; không in giá trị vào tài liệu/log. Docker loại env/key khỏi image. Render vẫn cần import env và thêm Secret Files. Không dùng Neon production chạy test.
 
-Database production neondb/schema tank_battle; direct endpoint cùng Hikari 5 kết nối, JDBC/JPA/Flyway thống nhất schema. Bản kiểm chứng mới nhất: 75 test Java, 34 test PostgreSQL và prod-profile JAR trên DB test mới. Đọc STATUS trước khi dùng số liệu này cho phiên bản source khác.
+Database production neondb/schema tank_battle; direct endpoint cùng Hikari 5 kết nối, JDBC/JPA/Flyway thống nhất schema. Bản kiểm chứng mới nhất: 78 test Java, 34 test PostgreSQL 18.6 và prod-profile JAR trên DB test mới; admin login/API quản trị/API phòng đạt. Đọc STATUS trước khi dùng số liệu này cho phiên bản source khác.

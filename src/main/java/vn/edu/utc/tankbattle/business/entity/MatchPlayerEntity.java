@@ -6,7 +6,9 @@ import vn.edu.utc.tankbattle.common.base.entity.BaseEntity;
 
 /** Kết quả lịch sử không mất khi người chơi rời phòng. */
 @Entity
-@Table(name = "match_players")
+@Table(
+        name = "match_players",
+        indexes = @Index(name = "idx_match_players_user", columnList = "user_id"))
 public class MatchPlayerEntity extends BaseEntity {
     @EmbeddedId private MatchPlayerId id;
 

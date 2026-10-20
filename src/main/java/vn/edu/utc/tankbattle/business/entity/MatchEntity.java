@@ -8,7 +8,14 @@ import vn.edu.utc.tankbattle.common.constant.AppConstants.GameMode;
 
 /** Metadata và kết quả chính thức; state mô phỏng ở match_snapshots. */
 @Entity
-@Table(name = "matches")
+@Table(
+        name = "matches",
+        indexes = {
+            @Index(name = "idx_matches_room_status", columnList = "room_id,status"),
+            @Index(
+                    name = "idx_matches_mode_status",
+                    columnList = "game_mode,status,difficulty,stage_number")
+        })
 public class MatchEntity extends BaseEntity {
     @Id
     @Column(length = 36)

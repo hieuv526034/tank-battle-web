@@ -18,10 +18,9 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     hikari:
-      data-source-properties:
-        # pgJDBC thiết lập search_path ngay khi kết nối, phục vụ cả JDBC/native SQL.
-        # Dùng direct endpoint để thiết lập phiên không mất qua PgBouncer transaction pooling.
-        currentSchema: tank_battle
+      # Đặt schema cho từng kết nối JDBC, kể cả URL chưa có hoặc chọn sai currentSchema.
+      # Hikari gọi Connection.setSchema; dùng direct endpoint để giữ trạng thái phiên.
+      schema: tank_battle
       maximum-pool-size: ${DB_POOL_SIZE:5}
       minimum-idle: 0
       connection-timeout: 30000

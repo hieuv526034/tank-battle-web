@@ -14,5 +14,3 @@ tank:
   auth:
     ephemeral-keys: true
     secure-cookie: false
-  local-demo:
-    enabled: false

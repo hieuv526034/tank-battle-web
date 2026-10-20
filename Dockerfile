@@ -19,6 +19,8 @@ RUN groupadd --gid 1000 tankbattle \
 COPY --from=build --chown=1000:1000 /workspace/build/libs/tank-battle-web-1.0.0.jar ./app.jar
 USER 1000:1000
 
+# Container mặc định chạy PostgreSQL/prod kể cả khi Dashboard chưa chọn profile.
+ENV SPRING_PROFILES_ACTIVE=prod
 # Render Free có RAM hạn chế; chừa bộ nhớ ngoài heap cho thread, metaspace và native I/O.
 ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=55.0 -XX:InitialRAMPercentage=15.0 -XX:+ExitOnOutOfMemoryError"
 EXPOSE 10000

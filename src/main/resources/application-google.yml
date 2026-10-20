@@ -1,4 +1,4 @@
-# Chỉ bật khi đã tạo Google OAuth Client: --spring.profiles.active=local,google
+# Bổ sung Google vào prod khi đã tạo OAuth Client: --spring.profiles.active=prod,google
 spring:
   security:
     oauth2:

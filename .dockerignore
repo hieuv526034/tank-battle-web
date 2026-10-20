@@ -8,6 +8,8 @@
 !gradle.properties
 !src/
 !src/**
+# Render chỉ biên dịch main; test vẫn được chạy riêng trên GitHub CI.
+src/test/
 !Dockerfile
 # Không cho key/secret bị thêm nhầm vào resources rồi đóng gói vào JAR.
 **/.env

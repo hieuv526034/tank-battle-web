@@ -63,6 +63,8 @@ Mỗi lần chạy, Flyway tạo schema trên DB test mới để kiểm migrati
 
 Không cần cài Java/PostgreSQL trên máy chủ Render bằng tay. Dockerfile tự build; Neon là DB ngoài, không tạo thêm database Render.
 
+Docker đóng gói bằng `bootJar` (mọi build dùng PostgreSQL, không còn cờ -Pproduction), không chạy test hoặc tạo DB lúc build; không gửi src/test vào Docker context. JAR production không có H2/application-local.yml và runtime mặc định profile prod. GitHub vẫn kiểm thử trên runner/DB tạm trước deploy. Gradle thuộc build stage, không chạy chung JVM ứng dụng. Xem [chi tiết Gradle](23-gradle-va-thymeleaf.md).
+
 ## 4. Environment Variables: điền từng dòng
 
 Phiên bản mới bổ sung bootstrap admin: nhập `BOOTSTRAP_ADMIN_ENABLED=true`, `BOOTSTRAP_ADMIN_USERNAME=admin`, `BOOTSTRAP_ADMIN_PASSWORD` lấy từ render.env (12–64 ký tự). Đã bổ sung vào file môi trường hiện tại; cần import lại trên Render trước deploy. Lần khởi động sau giữ nguyên mật khẩu trong DB, không reset theo env. Xem [luồng admin](24-bootstrap-admin-va-phan-quyen.md).
@@ -93,7 +95,7 @@ Nhấn Add Environment Variable. Giá trị không bọc dấu nháy trong Dashb
 | JWT_KEY_ID                 | tank-v1                                              |
 | DB_POOL_SIZE               | 5                                                    |
 | API_DOCS_ENABLED           | true cho demo Swagger; false nếu muốn tắt            |
-| LOCAL_DEMO_ENABLED         | false                                                |
+
 
 Lấy hostname thật từ **Neon → Connect**. Hai URL có cấu trúc:
 
@@ -152,7 +154,7 @@ Sau khi GitHub Actions xanh và điền đủ env/key, bấm **Create Web Servic
 
 Docker build chỉ đóng gói source → Render start JAR bằng profile prod → Flyway dùng direct URL chạy V1–V6 → Hibernate validate entity/schema → security/runtime khởi động → health/readiness UP.
 
-Migration tạo bảng/index/ràng buộc và dữ liệu khóa hệ thống cần thiết. Không tự thêm tài khoản demo production hoặc dữ liệu test. Người dùng thật đăng ký qua API. Catalog luật/địch/item/cửa là JSON được load khi startup, không phải mọi dữ liệu mặc định đều nằm trong SQL.
+Migration tạo bảng/index/ràng buộc và dữ liệu khóa hệ thống cần thiết. Entity khai báo @Index/@UniqueConstraint tương ứng với các ràng buộc đã có; Hibernate ddl-auto=validate không tạo DDL từ annotation. Không cần bật create/update hoặc sửa migration đã phát hành để chạy lại. Không tự thêm tài khoản demo production hoặc dữ liệu test. Người dùng thật đăng ký qua API. Catalog luật/địch/item/cửa là JSON được load khi startup, không phải mọi dữ liệu mặc định đều nằm trong SQL.
 
 Flyway tạo tank_battle nếu chưa có, giữ lịch sử tại tank_battle.flyway_schema_history; JPA/JDBC cùng schema. Lần sau chỉ chạy migration mới, không xóa/tạo lại toàn bộ. Giữ nguyên V1–V6; thêm V7 trở đi khi đổi DDL. Có thể dùng SQL Editor Neon đọc lịch sử:
 
@@ -200,6 +202,21 @@ Env và Secret Files vẫn nằm trên Render; CI chỉ dùng DB/key test. Khôn
 | No open ports/health fail                    | PORT=10000, Docker Command trống, profile prod, xem log startup                                 |
 | Trả 404 ở /                                  | UI chưa có; kiểm readiness và Swagger thay vì suy ra backend chết                               |
 
+Log có Flyway version 6 và Hibernate validate thành công nhưng `relation "rooms" does not exist` hoặc `relation "app_locks" does not exist`: kiểm schema JDBC trước. Source đặt `spring.datasource.hikari.schema=tank_battle` cho mọi connection, cùng schema Flyway/JPA. Push/redeploy đúng commit đã sửa; import lại render.env nếu Dashboard còn cấu hình cũ. Nếu Dashboard có `SPRING_DATASOURCE_HIKARI_SCHEMA` ghi đè thì đặt `tank_battle`. Giữ direct endpoint và hai RSA Secret Files. Không dùng repair/clean/drop/baseline để chữa sai search_path.
+
+Cảnh báo Flyway chỉ hỗ trợ PostgreSQL tối đa 17 xuất phát từ thư viện Flyway cũ; source pin cả hai module 11.20.3 hỗ trợ PostgreSQL 18. Đây không phải cảnh báo cú pháp SQL trong migration bị cũ. Smoke mới kiểm thêm CSRF/login admin/API quản trị/API phòng để phát hiện lệch JDBC schema trước deploy. Docker build vẫn chỉ đóng gói, không chạy test hoặc kết nối DB.
+
 Google bật sau: tạo OAuth Client Web, callback https://tank-battle-web.onrender.com/login/oauth2/code/google, thêm GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET và đổi profile thành prod,google. Chưa có hai giá trị thì không bật profile google.
 
 Bằng chứng đã/chưa chạy nằm trong [STATUS](STATUS.md); tài liệu này không khẳng định đã deploy thành công trên tài khoản Render của bạn.
+
+## Tăng tốc GitHub CI
+
+- Hai job verify và docker chạy song song trên runner/DB tạm riêng. deploy-ready vẫn chờ cả hai và chỉ thành công khi cả hai success; Render tiếp tục After CI Checks Pass.
+- verify dùng gradle/actions/setup-gradle@v5 để cache Wrapper/dependency/build state, bỏ cache: gradle ở setup-java để không có hai cơ chế cache cùng Gradle User Home.
+- Gọi build postgresTest trong cùng một lần Gradle, bỏ clean trên runner mới. Task test lọc TEST_DATABASE_* khỏi môi trường JVM con nên vẫn dùng H2 riêng; postgresTest giữ nguyên env PostgreSQL CI và luôn chạy lại, không dùng cache kết quả DB.
+- Khai báo source/docs mà SourceContractTest đọc thành task inputs để cache không bỏ sót thay đổi hợp đồng source.
+- Docker dùng setup-buildx-action@v4/build-push-action@v7, load:true để chạy smoke ngay tại runner, cache-from/cache-to type=gha,mode=max. Cache export có ignore-error=true vì lỗi lưu cache không làm hỏng kết quả image đã build. Không push image lên registry, không thêm secret production.
+- Cache GitHub không chia sẻ trực tiếp sang Render. Render vẫn tự build Dockerfile và có cache riêng. Lần đầu phải tạo cache; chưa có số đo thời gian trước/sau trên GitHub.
+
+Tham chiếu: [Gradle caching](https://github.com/gradle/actions/blob/v5/docs/setup-gradle.md), [Docker GitHub cache](https://docs.docker.com/build/ci/github-actions/cache/).

@@ -33,9 +33,7 @@ public final class TestDatabaseProperties {
             properties.add("spring.flyway.schemas", () -> "tank_battle");
             properties.add("spring.flyway.create-schemas", () -> "true");
             properties.add("spring.jpa.properties.hibernate.default_schema", () -> "tank_battle");
-            properties.add(
-                    "spring.datasource.hikari.data-source-properties.currentSchema",
-                    () -> "tank_battle");
+            properties.add("spring.datasource.hikari.schema", () -> "tank_battle");
         }
     }
 }

@@ -5,14 +5,18 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import vn.edu.utc.tankbattle.common.base.entity.BaseIdentityEntity;
 import vn.edu.utc.tankbattle.common.constant.AppConstants.UserRole;
 
 /** Tài khoản; passwordHash chỉ dùng trong tầng xác thực, không map vào response. */
 @Entity
-@Table(name = "users")
+@Table(
+        name = "users",
+        uniqueConstraints =
+                @UniqueConstraint(name = "users_username_key", columnNames = "username"))
 public class UserEntity extends BaseIdentityEntity {
-    @Column(nullable = false, unique = true, length = 24)
+    @Column(nullable = false, length = 24)
     private String username;
 
     @Column(name = "display_name", nullable = false, length = 30)

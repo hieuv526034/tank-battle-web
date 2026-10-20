@@ -79,9 +79,26 @@ try {
     if ($response.StatusCode -ne 401 -or $body.code -ne 'AUTH_001' -or $body.locale -ne 'en') {
         throw 'Auth của prod profile không trả đúng lỗi/locale khi chưa bật Google.'
     }
+    # Health/JPA có thể đạt dù JDBC tìm sai schema. Đăng nhập và gọi API thật để kiểm cả hai.
+    $csrf = Invoke-RestMethod "http://127.0.0.1:$httpPort/api/auth/csrf" -SessionVariable smokeSession
+    $loginPayload = @{
+        username = $env:BOOTSTRAP_ADMIN_USERNAME
+        password = $env:BOOTSTRAP_ADMIN_PASSWORD
+    } | ConvertTo-Json -Compress
+    $login = Invoke-RestMethod "http://127.0.0.1:$httpPort/api/auth/login" -Method Post `
+        -WebSession $smokeSession -ContentType 'application/json' -Body $loginPayload `
+        -Headers @{'X-XSRF-TOKEN' = $csrf.data.token}
+    if ([string]::IsNullOrWhiteSpace($login.data.accessToken)) { throw 'Admin bootstrap chưa đăng nhập được.' }
+    $authorization = @{Authorization = 'Bearer ' + $login.data.accessToken}
+    $admin = Invoke-RestMethod "http://127.0.0.1:$httpPort/api/admin/me" -Headers $authorization
+    if ($admin.data.role -ne 'ADMIN' -or $admin.data.username -ne 'admin') {
+        throw 'Tài khoản bootstrap chưa có đúng quyền quản trị.'
+    }
+    $rooms = Invoke-RestMethod "http://127.0.0.1:$httpPort/api/rooms" -Headers $authorization
+    if ($null -eq $rooms.data -or @($rooms.data).Count -ne 0) { throw 'DB smoke mới phải có danh sách phòng trống.' }
     & java --class-path $driver $databaseTool verify $env:SPRING_DATASOURCE_URL
     if ($LASTEXITCODE -ne 0) { throw 'Thiếu migration trong DB smoke.' }
-    Write-Output 'PRODUCTION_PROFILE_STARTUP_OK: health UP, auth 401/en, Flyway V1-V6.'
+    Write-Output 'PRODUCTION_PROFILE_STARTUP_OK: health UP, auth 401/en, admin login/API, rooms API, Flyway V1-V6.'
 } finally {
     if ($null -ne $app -and -not $app.HasExited) {
         # Chỉ dừng Java do smoke test này tạo; không dừng app/IDE của người phát triển.

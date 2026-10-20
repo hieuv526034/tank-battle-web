@@ -35,11 +35,16 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-          cache: gradle
-      - name: Java unit, H2, API and WebSocket
+      # Cache dependency, Wrapper và build output; không bật thêm cache trong setup-java.
+      - uses: gradle/actions/setup-gradle@v5
+      - name: Java, source, API, WebSocket and PostgreSQL
+        env:
+          TEST_DATABASE_URL: jdbc:postgresql://localhost:5432/tankbattle_test
+          TEST_DATABASE_USERNAME: tankbattle_test
+          TEST_DATABASE_PASSWORD: ci_test_only
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon --console=plain clean build
+          ./gradlew --no-daemon --console=plain build postgresTest
       - name: H2 and unit test reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -49,12 +54,6 @@ jobs:
             build/test-results/test/
             build/reports/tests/test/
           retention-days: 7
-      - name: Business flows on real PostgreSQL
-        env:
-          TEST_DATABASE_URL: jdbc:postgresql://localhost:5432/tankbattle_test
-          TEST_DATABASE_USERNAME: tankbattle_test
-          TEST_DATABASE_PASSWORD: ci_test_only
-        run: ./gradlew --no-daemon --console=plain postgresTest
       - name: PostgreSQL test reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -73,7 +72,7 @@ jobs:
 
   docker:
     name: Docker build and prod-profile startup
-    needs: verify
+    # Hai job dùng DB test riêng nên chạy đồng thời; deploy-ready vẫn chờ cả hai đạt.
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:
@@ -95,8 +94,15 @@ jobs:
           distribution: temurin
           java-version: "21"
       # Không nhận secrets production: Docker build chỉ biên dịch/đóng gói.
+      - uses: docker/setup-buildx-action@v4
       - name: Build the same Dockerfile used by Render
-        run: docker build --tag utc-tank-battle:ci .
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          tags: utc-tank-battle:ci
+          cache-from: type=gha,scope=tank-battle-web
+          cache-to: type=gha,scope=tank-battle-web,mode=max,ignore-error=true
       - name: Start container with prod profile and disposable test DB
         run: bash tools/ci-container-smoke.sh utc-tank-battle:ci jdbc:postgresql://localhost:5432/tankbattle_smoke
       - name: Check migrations on the fresh smoke database

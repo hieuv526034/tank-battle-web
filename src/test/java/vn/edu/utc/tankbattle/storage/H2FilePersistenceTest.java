@@ -12,10 +12,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.boot.DefaultApplicationArguments;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
-import vn.edu.utc.tankbattle.auth.config.LocalDemoProperties;
-import vn.edu.utc.tankbattle.auth.repository.LocalDemoRepository;
-import vn.edu.utc.tankbattle.auth.service.LocalDemoSeeder;
+import org.springframework.transaction.support.TransactionTemplate;
+import vn.edu.utc.tankbattle.auth.config.BootstrapAdminProperties;
+import vn.edu.utc.tankbattle.auth.repository.BootstrapAdminRepository;
+import vn.edu.utc.tankbattle.auth.service.BootstrapAdminInitializer;
 import vn.edu.utc.tankbattle.common.util.JdbcTimeUtils;
 
 /**
@@ -41,9 +43,7 @@ class H2FilePersistenceTest {
             migrate(source);
             JdbcTemplate db = new JdbcTemplate(source);
             seed(db);
-            userId =
-                    db.queryForObject(
-                            "SELECT id FROM users WHERE username='utc_demo1'", Long.class);
+            userId = db.queryForObject("SELECT id FROM users WHERE username='admin'", Long.class);
             db.update(
                     "UPDATE users SET display_name=?,password_hash=? WHERE id=?",
                     "Tên đã thay đổi",
@@ -62,7 +62,7 @@ class H2FilePersistenceTest {
             migrate(source);
             JdbcTemplate db = new JdbcTemplate(source);
             seed(db);
-            assertThat(db.queryForObject("SELECT COUNT(*) FROM users", Integer.class)).isEqualTo(4);
+            assertThat(db.queryForObject("SELECT COUNT(*) FROM users", Integer.class)).isEqualTo(1);
             assertThat(
                             db.queryForObject(
                                     "SELECT COUNT(*) FROM app_locks WHERE name='CREATE_ROOM'",
@@ -109,11 +109,13 @@ class H2FilePersistenceTest {
     }
 
     private void seed(JdbcTemplate db) {
-        LocalDemoSeeder seeder =
-                new LocalDemoSeeder(
-                        new LocalDemoRepository(db),
+        BootstrapAdminInitializer initializer =
+                new BootstrapAdminInitializer(
+                        new BootstrapAdminRepository(db),
                         Pbkdf2PasswordEncoder.defaultsForSpringSecurity_v5_8(),
-                        new LocalDemoProperties("UtcDemo!2026"));
-        seeder.run(new DefaultApplicationArguments());
+                        new BootstrapAdminProperties(
+                                "admin", "Quản trị hệ thống", "BootstrapTest!2026"));
+        new TransactionTemplate(new DataSourceTransactionManager(db.getDataSource()))
+                .executeWithoutResult(status -> initializer.run(new DefaultApplicationArguments()));
     }
 }

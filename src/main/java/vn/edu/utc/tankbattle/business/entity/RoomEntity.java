@@ -5,9 +5,11 @@ import vn.edu.utc.tankbattle.common.base.entity.BaseIdentityEntity;
 
 /** Phòng dùng FK dạng ID, đọc màn hình bằng projection/batch để tránh N+1. */
 @Entity
-@Table(name = "rooms")
+@Table(
+        name = "rooms",
+        uniqueConstraints = @UniqueConstraint(name = "rooms_code_key", columnNames = "code"))
 public class RoomEntity extends BaseIdentityEntity {
-    @Column(nullable = false, unique = true, length = 8)
+    @Column(nullable = false, length = 8)
     private String code;
 
     @Column(nullable = false, length = 40)

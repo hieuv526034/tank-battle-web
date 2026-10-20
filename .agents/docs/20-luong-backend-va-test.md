@@ -95,7 +95,7 @@ Payload client không đáng tin, luôn tách offline_saves khỏi matches/match
 | BusinessFlowTest                                | Room/API, tranh ghế/membership, kết toán đồng thời, history private, campaign unlock/rank, offline revision, profile/spec |
 | BusinessFlowTest WebSocket                      | TCP thật, ticket một lần, Origin, input/sync, JSON lỗi, revoke đóng socket                                                |
 | BusinessFlowTest recovery                       | Coordinator mới đọc snapshot, giữ buff/deadline, đủ người mới resume, tất cả disconnect thì pause                         |
-| H2FilePersistenceTest                           | Đóng/mở pool cùng file, migration/seed không nhân đôi, dữ liệu đã sửa giữ nguyên                                          |
+| H2FilePersistenceTest                           | Đóng/mở pool cùng file, migration/bootstrap admin không nhân đôi, giữ tên/hash/session đã sửa                             |
 | JUnit source contracts                                  | Không var, Instant, code/key/bundle, package/dependency direction, không hardcode prod secret                             |
 
 H2 và PostgreSQL chạy cùng BusinessFlowTest; script PostgreSQL dùng 18.6 cục bộ, CI dùng service PostgreSQL 18. Test không coi là benchmark. Bằng chứng số lượng/kết quả cuối nằm trong STATUS. Chưa kiểm chứng kill process đúng thời điểm ghi, reverse proxy public, Google thật hay UI/offline browser.
