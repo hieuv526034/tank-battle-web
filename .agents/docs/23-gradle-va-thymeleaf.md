@@ -60,7 +60,7 @@ GitHub gọi Wrapper, kiểm Java/H2/PostgreSQL rồi build/smoke Docker. Docker
 | CI container | PostgreSQL tankbattle_smoke tạm |
 | Render | Neon production qua biến môi trường |
 
-Xem [Render](22-github-render-cicd.md), [bootstrap admin](24-bootstrap-admin-va-phan-quyen.md) và [STATUS](STATUS.md). .env/render.env được phép commit theo yêu cầu chủ đồ án; Docker vẫn loại chúng khỏi image. RSA/H2 giữ riêng. Chưa nâng Gradle 9 hoặc scale nhiều runtime instance.
+Xem [Render](22-github-render-cicd.md), [bootstrap admin](24-bootstrap-admin-va-phan-quyen.md) và [STATUS](STATUS.md). .env/render.env và toàn bộ secrets/ gồm cặp JWT PEM được phép commit theo yêu cầu chủ đồ án; Docker vẫn loại env/key khỏi image và Render dùng Secret Files. Dữ liệu H2 vẫn bị Git bỏ qua. Chưa nâng Gradle 9 hoặc scale nhiều runtime instance.
 
 ## Tăng tốc GitHub CI
 

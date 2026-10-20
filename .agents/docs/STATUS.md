@@ -15,6 +15,34 @@ Cập nhật 20/10/2026, Asia/Saigon. Backend trước UI; không coi kế hoạ
 
 ## Lượt thay đổi hiện tại
 
+### Đồng bộ mật khẩu bootstrap admin theo yêu cầu người dùng
+
+- Đã đặt BOOTSTRAP_ADMIN_PASSWORD trong .env và render.env theo mật khẩu người dùng chọn; kiểm tra cả hai file có đúng một biến, giá trị khớp tuyệt đối và đủ 12 ký tự. Không ghi giá trị vào tài liệu/log.
+- Người dùng cần cập nhật cùng giá trị trong Render Environment rồi Save/redeploy; thay file local hoặc push Git không tự đồng bộ Dashboard. Bootstrap chỉ dùng mật khẩu khi tạo admin lần đầu, không đổi mật khẩu tài khoản đã tồn tại.
+- Chỉ thay giá trị cấu hình, không sửa Java, truy cập Neon hoặc chạy lại build/test. Cần kiểm readiness/đăng nhập trên Render sau khi cập nhật env.
+
+### Log Render mới: bootstrap admin thiếu mật khẩu hợp lệ
+
+- Log người dùng gửi lúc 16:42–16:44 UTC ngày 20/10/2026: prod đã validate đủ sáu migration, schema tank_battle version 6, EntityManagerFactory và Tomcat port 10000 đã khởi tạo. Không còn cảnh báo Flyway PostgreSQL 18 hoặc lỗi relation rooms/app_locks trong đoạn log này. ApplicationRunner sau đó dừng với IllegalStateException: BOOTSTRAP_ADMIN_PASSWORD cần 12–64 ký tự khi tạo admin lần đầu; process exit 1. Không coi dòng Started hoặc Tomcat started là đã readiness hoàn tất.
+- Đối chiếu BootstrapAdminInitializer: lỗi này chỉ phát sinh sau khi khóa guard/đọc username thành công, admin cấu hình chưa có và password không đạt ValidationRules. Render đang nhận password thiếu/không hợp lệ; không xác định giá trị Dashboard từ log. Kiểm .env/render.env trên máy bằng metadata/rule độ dài/code point, blank và NUL cho thấy cả hai có password hợp lệ; không in giá trị hoặc sửa mật khẩu.
+- Cách xử lý: Render → service → Environment, thêm/cập nhật đúng BOOTSTRAP_ADMIN_PASSWORD bằng giá trị hiện có trong render.env, giữ BOOTSTRAP_ADMIN_ENABLED=true và username đã chọn. Save/redeploy rồi kiểm readiness và đăng nhập admin. Spring/Docker không tự nạp render.env từ Git; commit/push file không tự đồng bộ Dashboard. Giữ nguyên database, schema/migration và cặp RSA.
+- Lượt này chỉ chẩn đoán/ghi tài liệu, không thay Java/env, không chạy lại test/build vì không có thay đổi runtime, không đăng nhập/chỉnh Dashboard hoặc truy cập Neon. Kiểm hợp đồng cấu hình local đạt, kiểm git diff --check sau cập nhật tài liệu.
+
+### Rà soát backend trước khi tích hợp UI
+
+- Đã đối chiếu P0/tài liệu nghiệp vụ với API, RoomService/MatchService/OfflineSaveService, RankingRepository, GameCoordinator và bộ test auth/business/engine. Luồng cốt lõi đủ để bắt đầu UI: auth/hồ sơ, phòng, WebSocket/game, kết quả/lịch sử/rank, checkpoint/recovery và đồng bộ save. Chưa coi toàn bộ sản phẩm đã xong khi chưa có UI/browser offline.
+- Phát hiện chênh lệch quyền P0: khách được xem bảng hạng nhưng hai API danh sách đang bị bắt JWT. Đã mở đúng GET /api/rankings và GET /api/rankings/campaign bằng matcher theo method/path; giữ route hạng/tiến độ cá nhân và API phòng cần JWT. Cập nhật annotation OpenAPI tương ứng. BusinessFlowTest thêm kiểm quyền công khai/riêng và security của spec.
+- Đã chạy spotlessApply build offline: 79 test Java, 0 failure/error/skipped; build/format đạt. Sau đó test-postgres.ps1 -ProductionSmoke đạt 35 test PostgreSQL 18.6, 0 failure/error/skipped; JAR prod mới trên DB trống health UP, auth 401/en, admin login/API quản trị/API phòng và sáu migration trong tank_battle đạt; public không có bảng. Cluster/JVM/key test đã dừng/dọn. Không đổi migration hoặc truy cập Neon, không bắt đầu viết UI.
+- Cập nhật tài liệu API/luồng/nghiệm thu và thứ tự UI. Phần còn lại: engine JS/IndexedDB/Service Worker/offline browser, tích hợp nhiều tab, Google thật, admin CRUD catalog nếu đưa vào phạm vi; còn phải kiểm HTTPS/WebSocket Render, tải/RAM và backup/restore trước nghiệm thu.
+
+### Cho phép commit secrets theo yêu cầu chủ đồ án
+
+- Kiểm chứng: Git nhận cả hai PEM ở trạng thái untracked, .data/build vẫn bị ignore; git diff --check đạt. Chạy riêng 6 SourceContractTest offline đạt; javac biên dịch GenerateJwtKeys thành công mà không chạy hoặc tạo key. Không chạy lại bộ DB/Docker vì thay đổi chỉ ở Git/tài liệu/thông báo công cụ.
+
+- Người dùng yêu cầu cho commit đầy đủ secrets sau khi đã được giải thích private key ký JWT. Đã thêm ngoại lệ !secrets/ và !secrets/** sau *.pem/*.key; cho phép toàn bộ thư mục secrets, gồm hai PEM hiện có. PEM/key ngoài secrets vẫn bị bỏ qua; dữ liệu H2/build/cache giữ ignore hiện tại.
+- Giữ nguyên nội dung cặp RSA, không in key và không tạo lại. Docker vẫn loại env/key khỏi build context/image; Render vẫn cần thêm hai Secret Files. Chỉ thay chính sách Git, tài liệu và thông báo của GenerateJwtKeys để khớp yêu cầu mới; không commit/push thay người dùng.
+- Đã cập nhật quy ước, README và hướng dẫn auth/CI/Neon/Render/Gradle để không còn hướng dẫn hiện hành chặn commit secrets. Các ghi nhận kiểm thử/audit cũ ở dưới là lịch sử trước đổi chính sách.
+
 ### Sửa startup Render: JDBC sai schema và cảnh báo PostgreSQL 18
 
 - Log Render mới: Flyway đã validate đủ 6 migration trong tank_battle và Hibernate đã tạo EntityManagerFactory, nhưng JDBC không tìm thấy rooms/app_locks. Đây là dấu hiệu search_path của kết nối JDBC khác schema Flyway/JPA, không phải chưa có cơ chế tạo bảng. URL trong log không có currentSchema; host không phải pooler. Không xác nhận được commit/env đang chạy trên Render.

@@ -7,6 +7,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -147,6 +148,13 @@ public class SecurityConfig {
                                                 "/api/auth/login",
                                                 "/api/auth/register",
                                                 "/api/auth/refresh")
+                                        .permitAll()
+                                        // Khách được xem bảng hạng; các đường dẫn cá nhân vẫn cần
+                                        // JWT.
+                                        .requestMatchers(
+                                                HttpMethod.GET,
+                                                "/api/rankings",
+                                                "/api/rankings/campaign")
                                         .permitAll()
                                         .requestMatchers("/api/admin/**")
                                         .hasRole("ADMIN")

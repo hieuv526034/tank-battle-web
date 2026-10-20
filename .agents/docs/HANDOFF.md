@@ -4,6 +4,17 @@ Cập nhật 20/10/2026. Đọc [quy ước](../AGENTS.md), [STATUS](STATUS.md),
 
 ## Quyết định hiện tại
 
+- Cập nhật mới nhất: .env và render.env đã đặt BOOTSTRAP_ADMIN_PASSWORD theo mật khẩu người dùng chọn; đã kiểm khớp tuyệt đối, đúng một biến mỗi file và đủ 12 ký tự. Không ghi giá trị ra tài liệu/log. Cần cập nhật Render Environment cùng giá trị rồi Save/redeploy; Git không đồng bộ Dashboard. Bootstrap không reset mật khẩu admin đã có. Không sửa Java, chạy lại build/test hoặc truy cập Neon cho thay đổi giá trị này.
+
+- Log Render mới nhất đã qua Flyway/Hibernate/schema/JDBC, nhưng runner bootstrap dừng do BOOTSTRAP_ADMIN_PASSWORD không đạt 12–64 ký tự khi chưa có admin. .env và render.env tại máy đều có giá trị đạt rule; chưa biết Dashboard đang đặt gì. Người dùng cần cập nhật biến đúng tên trong Render Environment bằng giá trị render.env rồi Save/redeploy; Git không tự đồng bộ env. Không bỏ validation/tắt bootstrap để né lỗi; không đổi key, reset DB hoặc chạy Neon để kiểm. Không sửa Java/env trong lượt chẩn đoán này.
+
+- Đánh giá trước UI: backend cốt lõi đã đủ để tích hợp theo luồng tài khoản → phòng/lobby → Canvas/WebSocket → kết quả/lịch sử/rank → offline/lưu. Chưa viết UI ở lượt đánh giá. Đọc phần đánh giá mới trong 18-backend-va-nghiem-thu.md; browser offline cần engine JS/bot/IndexedDB/Service Worker, API save chỉ đồng bộ khi có mạng. Admin CRUD catalog và Google thật còn giới hạn riêng; không coi test backend là nghiệm thu UI hoặc production.
+- Đã sửa chênh lệch P0: khách được GET /api/rankings và /api/rankings/campaign. Không dùng wildcard public /api/rankings/**; /me, tiến độ và phòng vẫn cần JWT. Swagger/test cùng quy định; build offline/Spotless và 79 test Java đạt. PostgreSQL 18.6 có 35 test đạt; prod JAR health/auth/admin login/rooms/migration/schema smoke đạt. Không dùng Neon hoặc kiểm Render/Docker thật; xem STATUS.
+
+- Lượt cho phép commit secrets đã kiểm Git nhận đủ hai PEM, giữ ignore .data/build; 6 SourceContractTest offline, javac GenerateJwtKeys và git diff --check đạt. Không sinh lại/in key, không commit/push, không truy cập DB.
+
+- Yêu cầu mới nhất: cho phép commit toàn bộ secrets/ gồm jwt-private.pem/jwt-public.pem, cùng .env/render.env. .gitignore đã thêm ngoại lệ secrets/** sau các mẫu *.pem/*.key; Docker vẫn loại env/key. Không tự đổi lại chính sách này, không in nội dung key. Render vẫn cần tải hai file lên Secret Files; không tự chuyển runtime sang đọc key từ source hoặc đóng gói key vào image. Người dùng tự commit/push.
+
 - Lỗi Render mới là JDBC không tìm thấy rooms/app_locks dù Flyway schema tank_battle đã version 6 và Hibernate validate đạt. Source trước sửa vẫn startup PostgreSQL mới thành công nên chưa xác nhận commit/env Render hiện tại. Đã chốt spring.datasource.hikari.schema=tank_battle thay map data-source-properties.currentSchema; JDBC/JPA/Flyway phải cùng schema, direct endpoint. URL mẫu vẫn giữ currentSchema=tank_battle.
 - Flyway pin 11.20.3 cho cả core/PostgreSQL để hỗ trợ PG18. Không sửa V1–V6: index/constraint đã có trong SQL, nay khai báo thêm @Index/@UniqueConstraint tương ứng ở entity; ddl-auto vẫn validate. Khi đổi DDL thật mới thêm migration V7 trở đi.
 - Kiểm chứng mới nhất: 78 test Java/build/Spotless và 34 test PostgreSQL 18.6 đạt; JAR prod thật tự tạo schema/bảng từ DB mới, admin login, /api/admin/me và /api/rooms đạt với URL không có currentSchema; public trống, đủ V1–V6, hết cảnh báo Flyway PG18. Smoke PowerShell/CI đã thêm luồng này. Docker/GitHub/Render thật chưa chạy; không dùng Neon. Xem STATUS để phân biệt các kết quả lịch sử bên dưới.
@@ -21,7 +32,7 @@ Cập nhật 20/10/2026. Đọc [quy ước](../AGENTS.md), [STATUS](STATUS.md),
 - Tài liệu/hướng dẫn đầy đủ ở .agents; root README/AGENTS là điểm vào giúp người/AI tự tìm. Cập nhật tài liệu tại đây sau mỗi lượt sửa; không ghi dữ liệu env/token/key ra log hoặc tài liệu.
 - Các test backend và hợp đồng source nằm trong src/test/java. Không tạo lại tests Node/package.json/Prettier. .editorconfig chỉ thống nhất format Java/Gradle giữa IDE; Java được Spotless kiểm tra.
 - tools có script backend đang dùng: PostgreSQL portable, smoke prod profile/container, kiểm DB chỉ đọc, JWT, import/export Render env. Giữ script; không giữ binary/cache/cluster thử trong source. Đầu ra dưới build, không .tools.
-- Cho phép commit .env/render.env theo yêu cầu chủ đồ án; Docker vẫn loại env/PEM. .data/secrets giữ riêng để không mất H2/cặp RSA. Không tự đổi lại chính sách env.
+- Cho phép commit .env/render.env và toàn bộ secrets/ theo yêu cầu chủ đồ án; Docker vẫn loại env/PEM. .data vẫn bị Git bỏ qua, giữ nguyên dữ liệu H2/cặp RSA khi dọn build. Không tự đổi lại chính sách này.
 - Production dùng database neondb, schema tank_battle. Flyway schemas/default-schema, Hibernate default_schema và Hikari schema cùng giá trị tank_battle; URL mẫu cũng có currentSchema tương ứng. App/Flyway dùng direct endpoint + Hikari 5, không pooler do JDBC/native SQL cần search_path ổn định; không tự đổi lại pooler khi chưa qualify toàn bộ SQL hoặc thiết kế schema tương ứng.
 - PostgreSQL test/smoke kiểm cùng schema tank_battle, public không có bảng. H2 chỉ trong test; đổi default schema không di chuyển dữ liệu cũ từ public. Không tự migrate/copy/drop/baseline dữ liệu Neon.
 

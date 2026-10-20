@@ -22,7 +22,7 @@ Trong thư mục project, nếu chưa có Git:
 ```powershell
 git init -b main
 git remote add origin https://github.com/hieuv526034/tank-battle-web.git
-git check-ignore secrets/jwt-private.pem .data/tankbattle.mv.db
+git check-ignore .data/tankbattle.mv.db
 .\gradlew.bat spotlessApply
 git add .
 git status --short
@@ -32,7 +32,7 @@ git push -u origin main
 
 Nếu repo đã có Git/remote thì bỏ hai lệnh init/add origin. Nếu remote có lịch sử, clone repo về rồi chép source vào hoặc đồng bộ lịch sử trước; không force push để bỏ code của thành viên khác.
 
-Theo quyết định mới nhất của chủ đồ án, `.env` và `render.env` được phép xuất hiện trong status và commit để nhóm dùng chung cấu hình demo. Không commit secrets/PEM, .data, .tools, target, build, .gradle hoặc node_modules. Cần commit gradlew, gradlew.bat và gradle/wrapper, gồm cả gradle-wrapper.jar. CI vẫn dùng DB/key test riêng, không nạp .env hoặc render.env vào job test.
+Theo quyết định mới nhất của chủ đồ án, `.env`, `render.env` và toàn bộ `secrets/` gồm hai file JWT PEM được phép xuất hiện trong status và commit để nhóm dùng chung cấu hình demo. `.gitignore` cho phép secrets/**, còn PEM/key ngoài thư mục này vẫn bị bỏ qua. Không commit .data, .tools, target, build, .gradle hoặc node_modules. Docker vẫn loại env/key khỏi image; commit key không tự tạo Secret Files trên Render. Cần commit gradlew, gradlew.bat và gradle/wrapper, gồm cả gradle-wrapper.jar. CI vẫn dùng DB/key test riêng, không nạp .env hoặc render.env vào job test.
 
 Mở tab **Actions → Backend checks**. Mọi push và PR đều tự chạy; không cần mỗi thành viên tự tạo workflow. Job thứ nhất kiểm tra source, bộ kiểm thử Java hiện tại và hai lớp auth/business trên PostgreSQL riêng. Job thứ hai build Dockerfile và chạy container prod profile với PostgreSQL test mới, kiểm health/auth/migration. Có artifact JAR và báo cáo test để tải.
 
@@ -115,7 +115,7 @@ AUTH_ISSUER hiện là https://tank-battle-web.onrender.com, không có dấu / 
 
 ## 5. Advanced → Secret Files
 
-Cặp key đã được tạo tại secrets/jwt-private.pem và secrets/jwt-public.pem trên máy chuẩn bị source. Máy khác chưa có thì chạy bằng JDK 21:
+Cặp key đã được tạo tại secrets/jwt-private.pem và secrets/jwt-public.pem, được phép commit theo yêu cầu chủ đồ án. Sau clone dùng lại đúng cặp đã có; chỉ khi chưa có key mới chạy bằng JDK 21:
 
 ```powershell
 java tools/GenerateJwtKeys.java secrets
@@ -199,6 +199,7 @@ Env và Secret Files vẫn nằm trên Render; CI chỉ dùng DB/key test. Khôn
 | Không tìm thấy driver/URL                    | Dùng jdbc:postgresql:// và đúng biến SPRING_DATASOURCE_URL                                      |
 | Authentication failed DB                     | Đúng role/password hiện tại của Neon; không tự thêm nháy vào Dashboard                          |
 | Flyway lỗi/checksum                          | Kiểm direct URL, cùng DB/schema, migration mới; không repair/clean/drop tùy tiện                |
+| BOOTSTRAP_ADMIN_PASSWORD cần 12–64 ký tự       | Thêm/cập nhật đúng biến trong Environment của Render, dùng giá trị hợp lệ ở render.env rồi Save/redeploy |
 | No open ports/health fail                    | PORT=10000, Docker Command trống, profile prod, xem log startup                                 |
 | Trả 404 ở /                                  | UI chưa có; kiểm readiness và Swagger thay vì suy ra backend chết                               |
 

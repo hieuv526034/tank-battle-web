@@ -49,7 +49,7 @@ Caddy hỗ trợ tự cấp/gia hạn HTTPS khi DNS, cổng và lưu trữ đáp
 
 App và container PostgreSQL phải dùng thông tin database khớp nhau. Spring Boot không tự đọc `.env` như một quy tắc mặc định; Compose phải truyền các biến được khai báo vào container hoặc ứng dụng phải cấu hình cơ chế đọc secret rõ ràng. Với secret dạng file, cấu hình Spring đọc file/config tree tương ứng.
 
-Quyết định mới của chủ đồ án: cho phép commit `.env`/`render.env` để nhóm dùng chung cấu hình demo. Docker vẫn loại hai file khỏi image, CI dùng DB/key test riêng. Không ghi mật khẩu, token, cookie hoặc toàn bộ message nhạy cảm vào log. Quyền `packages: write` dùng cho job publish; job đọc thông thường chỉ cần quyền tối thiểu. [GitHub Actions secrets](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets).
+Quyết định mới của chủ đồ án: cho phép commit `.env`/`render.env` và toàn bộ `secrets/` gồm cặp JWT PEM để nhóm dùng chung cấu hình demo. Docker vẫn loại env/key khỏi image, Render nhận key qua Secret Files; CI dùng DB/key test riêng. Không ghi mật khẩu, token, cookie hoặc toàn bộ message nhạy cảm vào log. Quyền `packages: write` dùng cho job publish; job đọc thông thường chỉ cần quyền tối thiểu. [GitHub Actions secrets](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets).
 
 ## 4. CI — tự kiểm tra khi thay đổi code
 

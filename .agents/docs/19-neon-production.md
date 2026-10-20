@@ -16,7 +16,7 @@ Thay đổi default-schema không di chuyển dữ liệu/bảng cũ từ public
 
 Đã kết nối JDBC qua SSL, chạy SELECT chỉ đọc: database `neondb`, PostgreSQL 18.6, schema `public` chưa có bảng tại thời điểm kiểm tra 20/10/2026. Không chạy ứng dụng/Flyway, không tạo schema/bảng/tài khoản thử trên Neon.
 
-Thông tin kết nối thật nằm trong `.env` và `render.env`. Theo yêu cầu mới nhất của chủ đồ án ngày 20/10/2026, hai file này được phép commit để nhóm dùng chung cấu hình demo; `.gitignore` đã cho phép. [.env.example](../../.env.example) giữ mẫu để tạo môi trường khác. Docker vẫn loại env khỏi image; script không in giá trị vào log. Spring không tự nạp `.env`, cần nạp biến vào process hoặc import cấu hình trên Render. RSA PEM tiếp tục nằm ngoài Git, đưa riêng vào Secret Files.
+Thông tin kết nối thật nằm trong `.env` và `render.env`. Theo yêu cầu mới nhất của chủ đồ án ngày 20/10/2026, hai file này được phép commit để nhóm dùng chung cấu hình demo; `.gitignore` đã cho phép. [.env.example](../../.env.example) giữ mẫu để tạo môi trường khác. Docker vẫn loại env khỏi image; script không in giá trị vào log. Spring không tự nạp `.env`, cần nạp biến vào process hoặc import cấu hình trên Render. Theo yêu cầu mới nhất, RSA PEM trong secrets/ cũng được phép commit. Docker vẫn loại key khỏi image; đưa hai file vào Secret Files trên Render.
 
 JDBC dùng `jdbc:postgresql://YOUR_NEON_DIRECT_HOST/neondb?sslmode=require&channelBinding=require&currentSchema=tank_battle`. Tên tham số của pgJDBC là `channelBinding`, khác `channel_binding` trong URI của libpq. Xem [tài liệu driver](https://jdbc.postgresql.org/documentation/use/). Đã pin pgJDBC 42.7.14 và Flyway 11.20.3 hỗ trợ PostgreSQL 18; hai module Flyway giữ cùng phiên bản.
 
@@ -33,7 +33,7 @@ Script nạp biến môi trường và chạy `tools/CheckDatabase.java`. JDBC �
 ## Chuẩn bị chạy production sau này
 
 1. Có máy chủ chạy ứng dụng và domain HTTPS; Neon chỉ cung cấp DB.
-2. Tạo cặp RSA PKCS8/X509 ổn định, đặt ngoài source và cấu hình `JWT_PRIVATE_KEY`, `JWT_PUBLIC_KEY`, `AUTH_ISSUER` đúng URL public.
+2. Tạo cặp RSA PKCS8/X509 ổn định, lưu trong secrets/ và cấu hình `JWT_PRIVATE_KEY`, `JWT_PUBLIC_KEY`, `AUTH_ISSUER` đúng URL public.
 3. Bổ sung các biến còn thiếu trong `.env` từ `.env.example`. Profile prod mặc định bắt buộc keys ổn định; khóa tạm chỉ phục vụ test.
 4. Nạp môi trường: `. .\tools\Import-LocalEnvironment.ps1`. Đây chỉ nạp KEY=VALUE vào process, không thực thi nội dung file.
 5. Ứng dụng mặc định profile prod, gồm cả khi chạy bootRun trên máy phát triển. Lần khởi đầu Flyway tự chạy V1–V6 tạo bảng và seed hệ thống; không dùng `ddl-auto=create/drop`.

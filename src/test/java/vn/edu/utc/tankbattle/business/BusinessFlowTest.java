@@ -561,6 +561,34 @@ class BusinessFlowTest {
         assertThat(rankings.personal(host.id()).orElseThrow().played()).isEqualTo(1);
     }
 
+    /** Khách đọc bảng hạng công khai; hạng/tiến độ riêng và nghiệp vụ phòng vẫn cần JWT. */
+    @Test
+    void rankingListsArePublicButPersonalDataStillRequiresAuthentication() throws Exception {
+        for (String path : List.of("/api/rankings", "/api/rankings/campaign")) {
+            mvc.perform(get(path))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data").isArray());
+        }
+        for (String path :
+                List.of(
+                        "/api/rankings/me",
+                        "/api/rankings/campaign/me",
+                        "/api/rankings/campaign/me/progress",
+                        "/api/rooms")) {
+            mvc.perform(get(path))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.code").value("AUTH_001"));
+        }
+        JsonNode specification =
+                body(mvc.perform(get("/v3/api-docs")).andExpect(status().isOk()).andReturn());
+        for (String path : List.of("/api/rankings", "/api/rankings/campaign")) {
+            JsonNode security = specification.path("paths").path(path).path("get").path("security");
+            assertThat(security.isMissingNode() || security.isEmpty()).isTrue();
+        }
+        JsonNode personalSecurity = specification.at("/paths/~1api~1rankings~1me/get/security");
+        assertThat(personalSecurity.get(0).has("bearerAuth")).isTrue();
+    }
+
     @Test
     void profileAndOpenApiExposeActualBusinessContracts() throws Exception {
         ApiPlayer owner = player();

@@ -40,6 +40,6 @@ Engine tick chỉ dùng RAM; checkpoint/kết toán ghi theo lô ngoài tick. JP
 
 Chỉ cần JDK 21; Wrapper tải Gradle/dependency. Không có Node/npm trong backend. Báo cáo JUnit dưới build/reports/tests; log PostgreSQL/smoke ở build/verification. Ứng dụng mặc định prod/PostgreSQL; H2 chỉ trong test. Dữ liệu H2 cũ trong .data và RSA trong secrets không bị xóa khi dọn build.
 
-Theo yêu cầu chủ đồ án, .env/render.env được phép commit; không in giá trị vào tài liệu/log. Docker loại env/key khỏi image. Render vẫn cần import env và thêm Secret Files. Không dùng Neon production chạy test.
+Theo yêu cầu chủ đồ án, .env/render.env và toàn bộ secrets/ gồm cặp JWT PEM được phép commit; không in giá trị/key vào tài liệu/log. Docker loại env/key khỏi image. Render vẫn cần import env và thêm Secret Files. Không dùng Neon production chạy test.
 
-Database production neondb/schema tank_battle; direct endpoint cùng Hikari 5 kết nối, JDBC/JPA/Flyway thống nhất schema. Bản kiểm chứng mới nhất: 78 test Java, 34 test PostgreSQL 18.6 và prod-profile JAR trên DB test mới; admin login/API quản trị/API phòng đạt. Đọc STATUS trước khi dùng số liệu này cho phiên bản source khác.
+Database production neondb/schema tank_battle; direct endpoint cùng Hikari 5 kết nối, JDBC/JPA/Flyway thống nhất schema. Bản kiểm chứng mới nhất: 79 test Java, 35 test PostgreSQL 18.6 và prod-profile JAR trên DB test mới; admin login/API quản trị/API phòng đạt. Đọc STATUS trước khi dùng số liệu này cho phiên bản source khác.

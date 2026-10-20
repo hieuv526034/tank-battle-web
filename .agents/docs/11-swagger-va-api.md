@@ -6,7 +6,7 @@ Swagger local /swagger-ui.html; spec /v3/api-docs. Production tắt mặc địn
 
 ApiResponse gồm code/messageKey/message/locale/data/errors; SYS_000 khi thành công. Lỗi trường là errors[field] chứa code/key/message, không có rejectedValue. Accept-Language vi/en. Không trả SQL/exception text/password.
 
-API nghiệp vụ dùng Bearer. POST `/api/auth/**` có CSRF vì có refresh cookie; logout/logout-all/socket-ticket yêu cầu Bearer **AND** CSRF trong OpenAPI. Session web không thay JWT ở API.
+GET /api/rankings và GET /api/rankings/campaign công khai cho khách. Hạng/tiến độ cá nhân và các API nghiệp vụ khác dùng Bearer. POST `/api/auth/**` có CSRF vì có refresh cookie; logout/logout-all/socket-ticket yêu cầu Bearer **AND** CSRF trong OpenAPI. Session web không thay JWT ở API.
 
 Mọi REST operation `/api/**` và `/auth/token` có tham số header **Accept-Language** trong Swagger, tham chiếu component dùng chung: chọn `vi` hoặc `en`, mặc định `vi`. Không phải chép lại parameter ở từng controller. Header chọn ngôn ngữ cả response thành công, lỗi nghiệp vụ, validation và security; code/messageKey không thay đổi. `en-US` dùng tiếng Anh; ngôn ngữ không hỗ trợ quay về tiếng Việt, hoặc chọn ngôn ngữ hỗ trợ tiếp theo trong danh sách q-value.
 
@@ -40,9 +40,9 @@ Mọi REST operation `/api/**` và `/auth/token` có tham số header **Accept-L
 | GET /api/matches/{id}/state                 | GameFrameResponse                        | Live RAM hoặc snapshot terminal                           |
 | POST /api/matches/{id}/resume-ready         | Void                                     | Còn sống/member/socket, trong hạn                         |
 | POST /api/matches/{id}/cancel-recovery      | Void                                     | RECOVERING; ABORTED không cộng ranking                    |
-| GET /api/rankings                           | List RankResponse                        | Arena FINISHED, phân trang                                |
+| GET /api/rankings                           | List RankResponse                        | Công khai; Arena FINISHED, phân trang                      |
 | GET /api/rankings/me                        | RankResponse hoặc null                   | Hạng Arena của tôi                                        |
-| GET /api/rankings/campaign                  | List CampaignRankResponse                | Theo difficulty                                           |
+| GET /api/rankings/campaign                  | List CampaignRankResponse                | Công khai; theo difficulty                                |
 | GET /api/rankings/campaign/me               | CampaignRankResponse hoặc null           | Hạng Campaign toàn bảng của tôi                           |
 | GET /api/rankings/campaign/me/progress      | List số cửa đã WIN                       | Theo difficulty                                           |
 | GET /api/game/catalog                       | GameCatalogResponse                      | Rules, catalog, cửa/wave                                  |

@@ -17,7 +17,7 @@ Gốc `vn.edu.utc.tankbattle` chỉ có `auth`, `common`, `business`. Business d
 
 1. GET /api/auth/csrf nhận cookie XSRF-TOKEN và data.token.
 2. Register rồi login với cookie + X-XSRF-TOKEN. Access JWT nằm trong data; refresh cookie HttpOnly.
-3. Dùng Authorization: Bearer TOKEN cho API nghiệp vụ. Không gửi userId/HP/điểm do client tự khai.
+3. Dùng Authorization: Bearer TOKEN cho API nghiệp vụ riêng. Khách có thể GET /api/rankings và /api/rankings/campaign; route hạng/tiến độ cá nhân vẫn cần JWT. Không gửi userId/HP/điểm do client tự khai.
 4. Tạo/vào phòng trước. POST /api/auth/socket-ticket cần Bearer **và** CSRF, cấp vé ngẫu nhiên dùng một lần, sống tối đa 30 giây.
 5. Mở /ws/game?ticket=OPAQUE_TICKET. Không đưa JWT vào URL. Origin phải trùng host/scheme/port; web session cũng được handshake hỗ trợ.
 6. Handler kiểm tra membership, bind socket mới nhất, đóng socket cũ và phát LOBBY.
@@ -64,6 +64,8 @@ Checkpoint mặc định 2 giây, tick đơn điệu, chạy qua một executor 
 Crash có thể mất phần từ checkpoint cuối tới lúc crash (mặc định khoảng 2 giây nếu storage khỏe), không hứa không mất từng input. Khóa runtime và DB có phạm vi riêng; chỉ vận hành một instance game.
 
 ## 6. Kết toán và bảng xếp hạng
+
+GET /api/rankings và GET /api/rankings/campaign cho khách đọc danh sách theo P0. /me và /campaign/me/progress vẫn yêu cầu JWT; không cho phép toàn bộ /api/rankings/**. BusinessFlowTest kiểm cả HTTP và security trong OpenAPI.
 
 Khóa room → match, kiểm tra terminal. Ghi toàn bộ outcome/HP/kills/score theo batch, snapshot FINISHED, metadata và trạng thái room cùng transaction. Retry thấy FINISHED/ABORTED thì dừng, không cộng thêm.
 

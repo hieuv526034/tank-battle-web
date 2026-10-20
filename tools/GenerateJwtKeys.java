@@ -13,7 +13,7 @@ import java.util.Set;
 /**
  * Sinh RSA 2048 bit dạng PKCS8/X509 để JwtConfiguration đọc được.
  * Chạy: java tools/GenerateJwtKeys.java secrets
- * Không ghi đè key đang có, không in nội dung key; thư mục secrets và PEM đã gitignore.
+ * Không ghi đè key đang có, không in nội dung key; chủ đồ án cho phép commit secrets, Docker vẫn loại key.
  */
 public final class GenerateJwtKeys {
     private GenerateJwtKeys() {}
@@ -35,7 +35,7 @@ public final class GenerateJwtKeys {
         KeyPair pair = generator.generateKeyPair();
         writePem(privateFile, "PRIVATE KEY", pair.getPrivate().getEncoded());
         writePem(publicFile, "PUBLIC KEY", pair.getPublic().getEncoded());
-        System.out.println("Đã tạo cặp JWT PEM; không đưa thư mục này vào Git hoặc Docker image.");
+        System.out.println("Đã tạo cặp JWT PEM; Docker loại key khỏi image, Render cần thêm Secret Files.");
     }
 
     /** Ghi PEM mới với dòng base64 64 ký tự; trên Unix thu hẹp quyền về chủ file. */

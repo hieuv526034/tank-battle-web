@@ -9,8 +9,10 @@ build/
 !render.env
 *.pem
 *.key
-secrets/
 .vscode/
 *.log
 .idea/
 *.iml
+# Theo yêu cầu chủ đồ án: cho phép commit toàn bộ secrets, gồm cặp JWT PEM.
+!secrets/
+!secrets/**

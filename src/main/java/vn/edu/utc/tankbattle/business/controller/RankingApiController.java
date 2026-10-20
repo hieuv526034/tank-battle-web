@@ -21,7 +21,6 @@ import vn.edu.utc.tankbattle.common.i18n.ApiResponseFactory;
 @RestController
 @RequestMapping("/api/rankings")
 @Tag(name = "05. Xếp hạng")
-@SecurityRequirement(name = "bearerAuth")
 @StandardApiErrors
 public class RankingApiController {
     private final RankingService rankings;
@@ -35,12 +34,13 @@ public class RankingApiController {
     @GetMapping
     @Operation(
             summary = "Bảng xếp hạng Arena",
-            description = "Thắng 3, hòa 1, thua 0; tính hạng trước khi phân trang.")
+            description = "Khách được xem. Thắng 3, hòa 1, thua 0; tính hạng trước khi phân trang.")
     public ApiResponse<List<RankResponse>> list(@Valid @ModelAttribute PageRequest page) {
         return responses.success(rankings.page(page.getPage(), page.getSize()));
     }
 
     @GetMapping("/me")
+    @SecurityRequirement(name = "bearerAuth")
     @Operation(summary = "Hạng của chính tôi", description = "data=null khi chưa có trận FINISHED.")
     public ApiResponse<RankResponse> personal(@AuthenticationPrincipal Jwt principal) {
         return responses.success(
@@ -51,7 +51,7 @@ public class RankingApiController {
     @Operation(
             summary = "Hạng Campaign theo độ khó",
             description =
-                    "Số cửa thắng giảm dần, rồi tổng điểm tốt nhất từng cửa. Chỉ trận online FINISHED/WIN.")
+                    "Khách được xem. Số cửa thắng giảm dần, rồi tổng điểm tốt nhất từng cửa. Chỉ trận online FINISHED/WIN.")
     public ApiResponse<List<CampaignRankResponse>> campaign(
             @RequestParam(defaultValue = "NORMAL") Difficulty difficulty,
             @Valid @ModelAttribute PageRequest page) {
@@ -60,6 +60,7 @@ public class RankingApiController {
     }
 
     @GetMapping("/campaign/me/progress")
+    @SecurityRequirement(name = "bearerAuth")
     @Operation(
             summary = "Các cửa đã thắng của tôi",
             description =
@@ -72,6 +73,7 @@ public class RankingApiController {
     }
 
     @GetMapping("/campaign/me")
+    @SecurityRequirement(name = "bearerAuth")
     @Operation(
             summary = "Hạng Campaign của tôi",
             description =

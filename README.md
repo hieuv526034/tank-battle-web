@@ -12,6 +12,6 @@ JAR: `build/libs/tank-battle-web-1.0.0.jar`, đóng gói bằng `bootJar` để 
 
 Tài liệu, trạng thái kiểm chứng và hướng dẫn AI tiếp tục: [.agents/README.md](.agents/README.md). Deploy GitHub/Render: [.agents/docs/22-github-render-cicd.md](.agents/docs/22-github-render-cicd.md).
 
-Theo yêu cầu chủ đồ án, `.env`/`render.env` được phép commit. Docker loại env khỏi image; khóa RSA và dữ liệu H2 giữ riêng. Render vẫn cần import env và thêm Secret Files.
+Theo yêu cầu chủ đồ án, `.env`/`render.env` và toàn bộ `secrets/` (gồm cặp JWT PEM) được phép commit. Docker loại env/key khỏi image; dữ liệu H2 vẫn bị Git bỏ qua. Render vẫn cần import env và thêm Secret Files.
 
 Production: Neon database `neondb`, schema `tank_battle`, direct endpoint cùng Hikari pool nhỏ. Flyway tạo schema/bảng và bootstrap admin từ cấu hình lần đầu; restart không reset dữ liệu hay mật khẩu.

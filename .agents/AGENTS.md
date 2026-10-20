@@ -32,13 +32,13 @@
 - Chuẩn hóa username/tên/mã phòng qua common util; mật khẩu giữ nguyên. Dùng validator chung cho request và invariant service.
 - Mốc sự kiện dùng Instant. SQL giữ TIMESTAMP WITH TIME ZONE; chuyển kiểu driver tập trung tại JdbcTimeUtils.
 - Mỗi thay đổi cập nhật tài liệu và kiểm thử thích hợp; không báo chạy đạt nếu chưa chạy.
-- Quyết định mới nhất 20/10/2026: chủ đồ án cho phép commit .env/render.env và các biến môi trường demo. Không tự đổi lại .gitignore để chặn chúng; không in giá trị vào tài liệu/log. Docker vẫn loại env khỏi image, RSA PEM và dữ liệu H2 vẫn nằm riêng.
+- Quyết định mới nhất 20/10/2026: chủ đồ án cho phép commit .env/render.env, các biến môi trường demo và toàn bộ secrets/ gồm jwt-private.pem/jwt-public.pem. Không tự đổi lại .gitignore để chặn chúng; không in giá trị hoặc nội dung key vào tài liệu/log. Docker vẫn loại env/key khỏi image, Render dùng Secret Files; dữ liệu H2/build/cache vẫn bị Git bỏ qua.
 
 ## Kiến trúc hiện chọn
 
 - Spring Boot 3.5.16; Gradle Wrapper 8.14.6 (Groovy DSL); ứng dụng chỉ có prod/PostgreSQL, mặc định prod. Đã bỏ application-local.yml và seed demo local theo yêu cầu mới nhất. H2 chỉ testRuntimeOnly; Flyway quản lý schema. Không đưa H2/local hoặc cờ -Pproduction trở lại runtime.
 - JPA cho CRUD entity; JDBC cho projection/khóa/batch. JDBC write cần cập nhật audit tương ứng và tránh đọc entity cũ trong cùng persistence context.
-- API `/api/**` dùng Bearer JWT; trang Thymeleaf dùng session/form/OIDC. Không đưa JWT vào query string.
+- API nghiệp vụ riêng dùng Bearer JWT; GET /api/rankings và GET /api/rankings/campaign công khai theo yêu cầu P0, các route hạng/tiến độ cá nhân vẫn cần JWT. Trang Thymeleaf dùng session/form/OIDC. Không đưa JWT vào query string.
 - Refresh trong cookie HttpOnly; endpoint dùng cookie có CSRF; không tắt CSRF toàn bộ.
 - Google nhận diện bằng `provider + subject`; không tự nối tài khoản local theo email.
 - WebSocket trực tiếp là lựa chọn implementation hiện tại, thay STOMP trong đề xuất ban đầu; handler/handshake đã triển khai, xem tài liệu 20 và STATUS.

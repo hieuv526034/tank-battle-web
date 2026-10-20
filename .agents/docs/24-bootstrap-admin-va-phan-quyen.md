@@ -30,6 +30,12 @@ Guard được giữ đến commit nên hai lần bootstrap đồng thời chỉ
 
 ADMIN là vai trò quản trị hệ thống, không tự bỏ kiểm tra chủ sở hữu trong các API người chơi. Catalog địch/item/cửa hiện được cấu hình bằng JSON có phiên bản; chưa có CRUD API hoặc màn hình quản trị các catalog đó. Không coi việc đã có role là đã hoàn tất toàn bộ giao diện/chức năng quản trị.
 
+## Lỗi cấu hình trên Render
+
+Nếu Flyway/Hibernate/Tomcat đã khởi tạo nhưng log có `BOOTSTRAP_ADMIN_PASSWORD cần 12–64 ký tự khi tạo admin lần đầu`, runner chưa tạo được admin do giá trị môi trường không hợp lệ. Vào Environment của service Render, thêm/cập nhật đúng `BOOTSTRAP_ADMIN_PASSWORD` bằng mật khẩu hợp lệ trong render.env, giữ `BOOTSTRAP_ADMIN_ENABLED=true` và username dự định, rồi Save/redeploy. Không đưa mật khẩu vào log/tài liệu.
+
+Spring không tự đọc render.env trong repository, và push file lên Git không tự cập nhật Environment của service tạo thủ công. Hai PEM vẫn được cung cấp qua Secret Files. Dòng Tomcat/Started có thể xuất hiện trước khi ApplicationRunner xong; cần chờ readiness UP và thử đăng nhập admin sau deploy. Không tắt bootstrap hoặc đổi ddl-auto để xử lý lỗi cấu hình mật khẩu.
+
 ## Chạy lại và kiểm tra
 
 Restart với cùng DB không đổi mật khẩu. Nếu sửa BOOTSTRAP_ADMIN_PASSWORD sau khi tài khoản đã tồn tại, mật khẩu DB vẫn giữ nguyên; không dùng bootstrap để reset mật khẩu. Đổi username cấu hình sẽ tạo tài khoản admin mới nếu tên chưa tồn tại, vì vậy giữ username ổn định giữa các lần deploy.
