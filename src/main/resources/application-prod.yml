@@ -1,0 +1,48 @@
+# Production tuyệt đối không có mật khẩu mặc định trong mã nguồn.
+spring:
+  lifecycle:
+    # Render cho 30s trước SIGKILL; chừa thời gian cho coordinator flush queue/checkpoint.
+    timeout-per-shutdown-phase: 10s
+  flyway:
+    # Flyway khởi tạo schema lúc start, không chạy ở Docker build hoặc trên CI với DB thật.
+    # Trên Neon, cung cấp URL direct (không -pooler) qua SPRING_FLYWAY_URL.
+    url: ${SPRING_FLYWAY_URL:${SPRING_DATASOURCE_URL}}
+    user: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    # Tạo/lưu lịch sử migration đúng schema của đồ án, không dựa vào schema public của role.
+    default-schema: tank_battle
+    schemas: tank_battle
+    create-schemas: true
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    hikari:
+      data-source-properties:
+        # pgJDBC thiết lập search_path ngay khi kết nối, phục vụ cả JDBC/native SQL.
+        # Dùng direct endpoint để thiết lập phiên không mất qua PgBouncer transaction pooling.
+        currentSchema: tank_battle
+      maximum-pool-size: ${DB_POOL_SIZE:5}
+      minimum-idle: 0
+      connection-timeout: 30000
+      validation-timeout: 5000
+      idle-timeout: 60000
+      max-lifetime: 300000
+  jpa:
+    properties:
+      hibernate:
+        default_schema: tank_battle
+server:
+  address: 0.0.0.0
+  # Render kết thúc HTTPS ở reverse proxy; Spring cần thấy scheme/host public cho cookie/OAuth/WS.
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        secure: true
+# Tắt Swagger public theo mặc định; có thể bật rõ ràng cho môi trường demo.
+springdoc:
+  api-docs:
+    enabled: ${API_DOCS_ENABLED:false}
+  swagger-ui:
+    enabled: ${API_DOCS_ENABLED:false}

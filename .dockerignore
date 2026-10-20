@@ -1,0 +1,20 @@
+# Chỉ gửi những gì bước build thực sự cần; kể cả secret file Render chép vào build context.
+**
+!gradlew
+!gradle/
+!gradle/**
+!settings.gradle
+!build.gradle
+!gradle.properties
+!src/
+!src/**
+!Dockerfile
+# Không cho key/secret bị thêm nhầm vào resources rồi đóng gói vào JAR.
+**/.env
+**/.env.*
+render.env
+**/*.pem
+**/*.key
+**/secrets/**
+**/.data/**
+**/*.log

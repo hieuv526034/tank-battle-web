@@ -1,0 +1,124 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.5.16'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'com.diffplug.spotless' version '7.0.4'
+}
+
+group = 'vn.edu.utc'
+version = '1.0.0'
+description = 'Game xe tăng 2D online và offline cho đồ án học Spring.'
+
+// Toolchain và bytecode thống nhất Java 21 giữa IDE, CI và Docker.
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+// Spring Boot BOM quản lý các dependency tương thích. Chỉ ghi đè pgJDBC đã kiểm SSL/channel binding.
+ext['postgresql.version'] = '42.7.14'
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.16'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+    runtimeOnly 'org.postgresql:postgresql'
+    runtimeOnly 'com.h2database:h2'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    // Giữ tên tham số để Spring MVC/validation map request như trước khi đổi build tool.
+    options.compilerArgs.add('-parameters')
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+    // Mỗi lớp vẫn có test concurrency riêng; không nhân nhiều Spring context/JVM cùng lúc.
+    maxParallelForks = 1
+    testLogging {
+        events 'failed', 'skipped'
+        exceptionFormat = 'full'
+    }
+    // Gradle tự xuất tổng kết vào XML/HTML; không cần listener và import kiểu test ở build script.
+}
+
+// Test thường dùng H2 riêng. Task này chỉ nhận PostgreSQL test từ script/CI, không tự đọc .env.
+tasks.register('postgresTest', Test) {
+    group = 'verification'
+    description = 'Kiểm thử auth/business trên PostgreSQL test loopback hoặc CI.'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    filter {
+        includeTestsMatching 'vn.edu.utc.tankbattle.auth.AuthSystemTest'
+        includeTestsMatching 'vn.edu.utc.tankbattle.business.BusinessFlowTest'
+    }
+    shouldRunAfter tasks.named('test')
+    outputs.upToDateWhen { false }
+    outputs.doNotCacheIf('Cần kiểm chứng DB PostgreSQL đang chạy trong lần gọi hiện tại') { true }
+    doFirst {
+        String testUrl = System.getenv('TEST_DATABASE_URL')
+        if (testUrl == null || !testUrl.startsWith('jdbc:postgresql://')) {
+            throw new GradleException('postgresTest cần TEST_DATABASE_URL của PostgreSQL test; không dùng Neon production.')
+        }
+    }
+}
+
+spotless {
+    java {
+        target 'src/main/java/**/*.java', 'src/test/java/**/*.java'
+        removeUnusedImports()
+        googleJavaFormat('1.28.0').aosp()
+    }
+}
+
+// ./gradlew build luôn kiểm format, test và tạo executable JAR.
+tasks.named('check') {
+    dependsOn tasks.named('spotlessCheck')
+}
+tasks.named('bootJar') {
+    archiveFileName = 'tank-battle-web-1.0.0.jar'
+}
+tasks.named('jar') {
+    enabled = false
+}
+
+// Xuất JDBC driver cho các công cụ Java độc lập; script không phụ thuộc vị trí cache Gradle.
+tasks.register('copyPostgresDriver', Copy) {
+    from(configurations.runtimeClasspath) {
+        include 'postgresql-*.jar'
+    }
+    into layout.buildDirectory.dir('tools/jdbc')
+}
+
+// Binary portable chỉ tải khi script Windows cần; không đưa vào dependencies của ứng dụng.
+configurations {
+    postgresTestBinary {
+        transitive = false
+    }
+}
+dependencies {
+    postgresTestBinary 'io.zonky.test.postgres:embedded-postgres-binaries-windows-amd64:18.6.0'
+}
+tasks.register('copyPostgresTestBinary', Copy) {
+    from configurations.postgresTestBinary
+    into layout.buildDirectory.dir('tools/postgres')
+}

@@ -1,0 +1,124 @@
+name: Backend checks
+# CI chạy mọi nhánh/PR. Render theo dõi main và tự deploy sau khi các check đạt
+# qua Auto-Deploy = After CI Checks Pass; workflow không gọi Neon hoặc deploy hook production.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+# Commit mới thay lần CI cũ đang chạy trên cùng nhánh/PR, không hủy nhánh của người khác.
+concurrency:
+  group: backend-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    name: Java, source and PostgreSQL tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        # DB tạm của CI, tự xóa sau job. Render dùng Neon qua Environment Variables riêng.
+        image: postgres:18
+        env:
+          POSTGRES_DB: tankbattle_test
+          POSTGRES_USER: tankbattle_test
+          POSTGRES_PASSWORD: ci_test_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tankbattle_test -d tankbattle_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+      - name: Java unit, H2, API and WebSocket
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon --console=plain clean build
+      - name: H2 and unit test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: h2-unit-test-reports
+          path: |
+            build/test-results/test/
+            build/reports/tests/test/
+          retention-days: 7
+      - name: Business flows on real PostgreSQL
+        env:
+          TEST_DATABASE_URL: jdbc:postgresql://localhost:5432/tankbattle_test
+          TEST_DATABASE_USERNAME: tankbattle_test
+          TEST_DATABASE_PASSWORD: ci_test_only
+        run: ./gradlew --no-daemon --console=plain postgresTest
+      - name: PostgreSQL test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-test-reports
+          path: |
+            build/test-results/postgresTest/
+            build/reports/tests/postgresTest/
+          retention-days: 7
+      - name: Packaged backend
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: build/libs/tank-battle-web-*.jar
+          retention-days: 7
+
+  docker:
+    name: Docker build and prod-profile startup
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: tankbattle_smoke
+          POSTGRES_USER: ci_test_only
+          POSTGRES_PASSWORD: ci_test_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci_test_only -d tankbattle_smoke"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      # Không nhận secrets production: Docker build chỉ biên dịch/đóng gói.
+      - name: Build the same Dockerfile used by Render
+        run: docker build --tag utc-tank-battle:ci .
+      - name: Start container with prod profile and disposable test DB
+        run: bash tools/ci-container-smoke.sh utc-tank-battle:ci jdbc:postgresql://localhost:5432/tankbattle_smoke
+      - name: Check migrations on the fresh smoke database
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          count=$(docker exec "$POSTGRES_CONTAINER" psql -U ci_test_only -d tankbattle_smoke -tAc 'SELECT COUNT(*) FROM tank_battle.flyway_schema_history WHERE success AND version IS NOT NULL')
+          test "$count" = "6"
+
+  deploy-ready:
+    name: Ready for Render
+    needs: [verify, docker]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      # Chặn trường hợp một job bị skip/cancel: chỉ báo sẵn sàng khi cả hai thật sự success.
+      - name: Require all verification jobs to succeed
+        env:
+          VERIFY_RESULT: ${{ needs.verify.result }}
+          DOCKER_RESULT: ${{ needs.docker.result }}
+        run: |
+          test "$VERIFY_RESULT" = "success"
+          test "$DOCKER_RESULT" = "success"
+          echo "CI passed. Render can deploy this commit if it belongs to the linked main branch."

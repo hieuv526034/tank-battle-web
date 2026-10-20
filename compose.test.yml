@@ -1,0 +1,15 @@
+# Chỉ DB TEST cục bộ; tuyệt đối không trỏ thông tin Neon production vào file này.
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: tankbattle_test
+      POSTGRES_USER: tankbattle_test
+      POSTGRES_PASSWORD: local_test_only
+    ports:
+      - "127.0.0.1:5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tankbattle_test -d tankbattle_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 10

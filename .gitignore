@@ -1,0 +1,16 @@
+target/
+build/
+.gradle/
+.tools/
+.data/
+# Theo yêu cầu chủ đồ án: cho phép commit cấu hình môi trường demo.
+!.env
+!.env.*
+!render.env
+*.pem
+*.key
+secrets/
+.vscode/
+*.log
+.idea/
+*.iml

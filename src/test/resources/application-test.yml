@@ -1,0 +1,18 @@
+# Test tự động dùng DB riêng, không chạm file .data của người phát triển.
+spring:
+  datasource:
+    url: jdbc:h2:mem:tankbattle-test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    username: sa
+    password: ""
+  thymeleaf:
+    cache: false
+tank:
+  bootstrap-admin:
+    enabled: true
+    username: admin
+    password: BootstrapTest!2026
+  auth:
+    ephemeral-keys: true
+    secure-cookie: false
+  local-demo:
+    enabled: false

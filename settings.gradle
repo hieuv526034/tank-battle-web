@@ -1,0 +1,2 @@
+// Tên project được dùng trong IDE, task và tên artifact, thống nhất với repository.
+rootProject.name = 'tank-battle-web'

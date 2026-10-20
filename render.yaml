@@ -1,0 +1,54 @@
+# Render Blueprint cho demo Free, DB dùng Neon đã có; không tạo thêm Render Postgres.
+# Repo liên kết: https://github.com/hieuv526034/tank-battle-web
+services:
+  - type: web
+    name: tank-battle-web
+    runtime: docker
+    plan: free
+    # Neon hiện ở us-east-2; đặt app tại Ohio để hạn chế độ trễ app ↔ DB.
+    region: ohio
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health/readiness
+    numInstances: 1
+    maxShutdownDelaySeconds: 30
+    # Render chờ CI của commit main đạt rồi mới build/deploy; không cần deploy hook/token.
+    # Demo chưa có ownership runtime xuyên process: chỉ merge/push main khi không còn trận chơi.
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: PORT
+        value: "10000"
+      - key: DB_POOL_SIZE
+        value: "5"
+      - key: LOCAL_DEMO_ENABLED
+        value: "false"
+      - key: BOOTSTRAP_ADMIN_ENABLED
+        value: "true"
+      - key: BOOTSTRAP_ADMIN_USERNAME
+        value: admin
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+      # Bật tài liệu cho demo đồ án; có thể tắt ở Dashboard khi không cần công khai Swagger.
+      - key: API_DOCS_ENABLED
+        value: "true"
+      - key: AUTH_ISSUER
+        value: https://tank-battle-web.onrender.com
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      # App và Flyway cùng dùng direct endpoint/neondb; schema tank_battle, Hikari pool nhỏ.
+      - key: SPRING_FLYWAY_URL
+        sync: false
+      - key: JWT_KEY_ID
+        value: tank-v1
+      # Tạo hai Secret Files cùng tên trong Render trước khi deploy. Không copy key vào Git.
+      - key: JWT_PRIVATE_KEY
+        value: file:/etc/secrets/jwt-private.pem
+      - key: JWT_PUBLIC_KEY
+        value: file:/etc/secrets/jwt-public.pem

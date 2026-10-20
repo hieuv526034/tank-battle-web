@@ -1,0 +1,111 @@
+spring:
+  application:
+    name: tank-battle-web
+  messages:
+    # Bundle chung cho lỗi nghiệp vụ, security và Bean Validation; không lấy locale của máy chủ.
+    basename: i18n/messages
+    encoding: UTF-8
+    fallback-to-system-locale: false
+  profiles:
+    # Chạy không chỉ định profile sẽ dùng H2 file local; prod phải chọn profile rõ ràng.
+    default: local
+  jackson:
+    serialization:
+      # Instant ra JSON dạng ISO-8601 UTC, tránh số timestamp mơ hồ về đơn vị.
+      write-dates-as-timestamps: false
+  thymeleaf:
+    cache: true
+  flyway:
+    # Migration tạo/nâng schema có phiên bản; chặn clean để không xóa dữ liệu do thao tác nhầm.
+    enabled: true
+    clean-disabled: true
+  sql:
+    init:
+      # Flyway quản lý schema/seed; không chạy data.sql mỗi lần app khởi động.
+      mode: never
+  jpa:
+    # Hoàn tất truy cập DB trong service; controller không âm thầm lazy-load entity sau transaction.
+    open-in-view: false
+    hibernate:
+      # Hibernate chỉ kiểm tra entity khớp schema, không tự create/drop bảng mỗi lần chạy.
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          # Gom các thao tác JPA phù hợp thành batch; JDBC batch riêng nằm trong repository.
+          batch_size: 50
+          time_zone: UTC
+        order_inserts: true
+        order_updates: true
+server:
+  port: ${PORT:8080}
+  shutdown: graceful
+  servlet:
+    session:
+      timeout: 30m
+      cookie:
+        http-only: true
+        same-site: lax
+  error:
+    # Lỗi API có handler custom; cấu hình này cũng chặn trang lỗi mặc định lộ chi tiết nội bộ.
+    include-message: never
+    include-stacktrace: never
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+      group:
+        readiness:
+          # Chỉ sẵn sàng nhận traffic khi ứng dụng và DB đều hoạt động.
+          include: readinessState,db
+tank:
+  bootstrap-admin:
+    # Bootstrap hệ thống chạy ở cả local/prod; test có cấu hình riêng. Không reset mỗi restart.
+    enabled: ${BOOTSTRAP_ADMIN_ENABLED:true}
+    username: ${BOOTSTRAP_ADMIN_USERNAME:admin}
+    display-name: ${BOOTSTRAP_ADMIN_DISPLAY_NAME:Quản trị hệ thống}
+    # Production phải cung cấp khi tạo lần đầu; không ghi mật khẩu cố định vào migration.
+    password: ${BOOTSTRAP_ADMIN_PASSWORD:}
+  # Chu kỳ checkpoint bình thường (ms); tick không gọi DB mà xếp snapshot sang executor.
+  checkpoint-ms: 2000
+  # Một người mất mạng khi người khác còn chơi được chờ 30s trước khi tính bỏ cuộc.
+  reconnect-ms: 30000
+  # Người mất kết nối trong phòng WAITING được giữ ghế tối đa 60s trước khi dọn.
+  lobby-disconnect-ms: 60000
+  # Cửa sổ xác nhận phục hồi 10 phút; deadline lưu DB, restart không tự gia hạn.
+  recovery-ms: 600000
+  # Giới hạn số phòng hoạt động để chặn tạo runtime vô hạn; không phải số người trong mỗi phòng.
+  max-rooms: 20
+  auth:
+    # AuthProperties giải thích từng trường; biến môi trường thay giá trị khi triển khai.
+    issuer: ${AUTH_ISSUER:http://localhost:8080}
+    audience: tank-battle-api
+    access-ttl: 5m
+    refresh-ttl: 7d
+    key-id: ${JWT_KEY_ID:tank-v1}
+    # Giá trị là đường dẫn Spring Resource tới PEM, không chèn nguyên private key vào YAML.
+    private-key: ${JWT_PRIVATE_KEY:}
+    public-key: ${JWT_PUBLIC_KEY:}
+    ephemeral-keys: false
+    # Local ghi đè false cho HTTP; production giữ true và cần HTTPS.
+    secure-cookie: true
+springdoc:
+  # OpenApiConfig bổ sung header ngôn ngữ/quyền; prod tắt cả spec và UI trong file profile.
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    persist-authorization: false
+    operations-sorter: alpha
+    tags-sorter: alpha
+    csrf:
+      enabled: true
+      cookie-name: XSRF-TOKEN
+      header-name: X-XSRF-TOKEN
+  packages-to-scan: vn.edu.utc.tankbattle

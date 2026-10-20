@@ -1,0 +1,20 @@
+# Chỉ để học/chạy thử khi máy chưa cài PostgreSQL. Dữ liệu tồn tại sau restart.
+spring:
+  datasource:
+    # Có thể dùng đường dẫn tuyệt đối qua LOCAL_DB_PATH để IDE/terminal dùng cùng file.
+    url: jdbc:h2:file:${LOCAL_DB_PATH:./.data/tankbattle};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;WRITE_DELAY=0
+    username: sa
+    password: ""
+  thymeleaf:
+    cache: false
+tank:
+  bootstrap-admin:
+    # Mật khẩu mẫu chỉ dành local; có thể thay bằng biến môi trường trước lần tạo đầu.
+    password: ${BOOTSTRAP_ADMIN_PASSWORD:UtcAdmin!2026}
+  local-demo:
+    enabled: ${LOCAL_DEMO_ENABLED:false}
+    password: ${LOCAL_DEMO_PASSWORD:UtcDemo!2026}
+  auth:
+    # Khóa tạm chỉ phục vụ học local; restart làm access token cũ hết hiệu lực.
+    ephemeral-keys: true
+    secure-cookie: false

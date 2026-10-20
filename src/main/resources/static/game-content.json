@@ -1,0 +1,98 @@
+{
+  "version": 1,
+  "enemies": [
+    {
+      "code": "TANK_BASIC",
+      "displayName": "Xe tăng bot",
+      "renderKey": "tank",
+      "movement": "GROUND",
+      "behavior": "RANGED",
+      "health": 3,
+      "speed": 96,
+      "contactDamage": 0,
+      "projectileDamage": 1,
+      "fireCooldownTicks": 14,
+      "hitboxRadius": 13,
+      "killScore": 30
+    },
+    {
+      "code": "BIRD_SCOUT",
+      "displayName": "Chim trinh sát",
+      "renderKey": "bird",
+      "movement": "AIR",
+      "behavior": "RANGED",
+      "health": 2,
+      "speed": 144,
+      "contactDamage": 1,
+      "projectileDamage": 1,
+      "fireCooldownTicks": 24,
+      "hitboxRadius": 10,
+      "killScore": 20
+    },
+    {
+      "code": "BUTTERFLY_SWARM",
+      "displayName": "Bướm",
+      "renderKey": "butterfly",
+      "movement": "AIR",
+      "behavior": "PATROL",
+      "health": 1,
+      "speed": 168,
+      "contactDamage": 1,
+      "projectileDamage": 0,
+      "fireCooldownTicks": 0,
+      "hitboxRadius": 8,
+      "killScore": 10
+    },
+    {
+      "code": "BEETLE_ARMORED",
+      "displayName": "Bọ giáp",
+      "renderKey": "beetle",
+      "movement": "GROUND",
+      "behavior": "CHASE",
+      "health": 5,
+      "speed": 64,
+      "contactDamage": 2,
+      "projectileDamage": 0,
+      "fireCooldownTicks": 0,
+      "hitboxRadius": 14,
+      "killScore": 50
+    }
+  ],
+  "items": [
+    {
+      "code": "ITEM_HEALTH",
+      "displayName": "Hộp cứu thương",
+      "effect": "REPAIR",
+      "amount": 1,
+      "durationTicks": 0
+    },
+    {
+      "code": "ITEM_DAMAGE",
+      "displayName": "Tăng sát thương",
+      "effect": "DAMAGE_BOOST",
+      "amount": 1,
+      "durationTicks": 200
+    },
+    {
+      "code": "ITEM_SHIELD",
+      "displayName": "Khiên",
+      "effect": "SHIELD",
+      "amount": 1,
+      "durationTicks": 200
+    },
+    {
+      "code": "ITEM_SPEED",
+      "displayName": "Tăng tốc",
+      "effect": "SPEED",
+      "amount": 25,
+      "durationTicks": 160
+    },
+    {
+      "code": "ITEM_RAPID_FIRE",
+      "displayName": "Bắn nhanh",
+      "effect": "RAPID_FIRE",
+      "amount": 30,
+      "durationTicks": 160
+    }
+  ]
+}

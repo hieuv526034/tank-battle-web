@@ -1,0 +1,31 @@
+[
+  {
+    "number": 1,
+    "name": "Làm quen thao trường",
+    "durationTicks": 4800,
+    "waves": [
+      ["BUTTERFLY_SWARM", "BIRD_SCOUT"],
+      ["TANK_BASIC", "TANK_BASIC"]
+    ]
+  },
+  {
+    "number": 2,
+    "name": "Bảo vệ khu rừng",
+    "durationTicks": 6000,
+    "waves": [
+      ["BUTTERFLY_SWARM", "BUTTERFLY_SWARM", "BIRD_SCOUT"],
+      ["BEETLE_ARMORED", "TANK_BASIC"],
+      ["BIRD_SCOUT", "BEETLE_ARMORED"]
+    ]
+  },
+  {
+    "number": 3,
+    "name": "Thử thách cuối",
+    "durationTicks": 7200,
+    "waves": [
+      ["TANK_BASIC", "BIRD_SCOUT", "BEETLE_ARMORED"],
+      ["BEETLE_ARMORED", "BEETLE_ARMORED", "BUTTERFLY_SWARM"],
+      ["TANK_BASIC", "TANK_BASIC", "BIRD_SCOUT", "BEETLE_ARMORED"]
+    ]
+  }
+]
