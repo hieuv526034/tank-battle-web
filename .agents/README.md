@@ -20,6 +20,8 @@ Bố cục header/menu/bàn chơi, hồ sơ chỉ đọc và sửa lỗi cloud/o
 
 Chạy local/IDE/bootRun, import .env và lỗi thiếu SPRING_DATASOURCE_URL: [30](docs/30-chay-local-va-nap-env.md).
 
+Màu nút sáng/tối, disabled và đang xử lý: [31](docs/31-trang-thai-nut-va-theme.md).
+
 ```text
 src/main/java/vn/edu/utc/tankbattle/
   auth/       tài khoản, JWT/Google, security và bootstrap admin

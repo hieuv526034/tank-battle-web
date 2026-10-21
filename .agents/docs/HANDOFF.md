@@ -2,6 +2,13 @@
 
 Cập nhật 21/10/2026. Đọc [quy ước](../AGENTS.md), [STATUS](STATUS.md), [luồng backend](20-luong-backend-va-test.md) và [bootstrap admin](24-bootstrap-admin-va-phan-quyen.md).
 
+## Tiếp tục sau sửa màu nút 21/10/2026
+
+- Đọc [31](31-trang-thai-nut-va-theme.md): disabled nghiệp vụ dùng palette rõ chữ, busy dùng disabled + aria-busy giữ màu/vòng chờ. Không thêm opacity thấp trở lại cho mọi button:disabled. Dùng ui.setButtonBusy và finally trong click/submit; không bỏ khóa request hoặc điều kiện nghiệp vụ.
+- Hero/battlefield/battle-dialog giữ bảng màu tối, baseline/hover nút primary chung cuối CSS. Kiểm theme sáng khi sửa selector: quy tắc :root[data-theme=light] từng có độ ưu tiên cao hơn selector vùng game.
+- Chromium riêng/static source thật/API giả đã kiểm trạng thái nút, form login lỗi/chống lặp, theme/hủy dialog và pageerror. Harness/ảnh dưới build/verification bị ignore, không cần Node/npm cho ứng dụng. Kết quả Gradle mới đọc STATUS; không lấy 86/39 của lượt trước làm số test chạy lại lượt UI này.
+- Người dùng đã commit lượt trước thành df3f8b8; chỉ giữ các thay đổi màu nút và tài liệu hiện tại, không tự commit/push/deploy hoặc mở app bằng env Neon. Nếu còn thấy UI cũ, rời trận rồi cập nhật Service Worker.
+
 ## Tiếp tục sau rà soát trước commit 21/10/2026
 
 - Người dùng hỏi còn vấn đề gì; đã rà source/CI/report, không chạy lại test hoặc full app. Báo cáo hiện có vẫn 86 test Java + 39 PostgreSQL đạt từ lượt trước. Đã sửa thông tin UI/browser cũ trong tài liệu 20/22 và mục giới hạn STATUS. Không có sửa logic/env/key/DB trong lượt này.

@@ -25,6 +25,9 @@
   --lime-dark: #25311b;
   --orange: #edac68;
   --red: #f18c85;
+  --control-disabled-bg: #30392f;
+  --control-disabled-text: #b8c2af;
+  --control-disabled-border: #5c6b55;
   --sidebar: 234px;
   --radius: 18px;
   --font: 'Be Vietnam Pro', sans-serif;
@@ -81,7 +84,8 @@ button {
 
 button:disabled {
   cursor: not-allowed;
-  opacity: .45;
+  /* Không làm mờ cả chữ/icon: nút đang chờ request cũng dùng disabled để chặn bấm lặp. */
+  opacity: 1;
 }
 
 button:focus-visible,
@@ -461,7 +465,7 @@ small {
   flex-shrink: 0;
 }
 
-.icon-button:hover {
+.icon-button:hover:not(:disabled) {
   background: var(--panel-2);
 }
 
@@ -505,6 +509,10 @@ small {
 
 .btn.primary:hover:not(:disabled) {
   background: #d1fc84;
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .btn.secondary {
@@ -2885,6 +2893,9 @@ details p {
   --lime-dark: #e5efda;
   --orange: #985016;
   --red: #b3332b;
+  --control-disabled-bg: #e3e7dc;
+  --control-disabled-text: #59654e;
+  --control-disabled-border: #a1af93;
 }
 
 :root[data-theme="light"] :is(input, select, .segmented span, .stage-body) {
@@ -3024,15 +3035,6 @@ details p {
   color: #c4f36b;
 }
 
-.hero .btn.primary {
-  background: #c4f36b !important;
-  color: #1b2513 !important;
-}
-
-.hero .btn.primary:hover:not(:disabled) {
-  background: #d1fc84 !important;
-}
-
 .hero .btn.secondary {
   color: #f1f3e9;
   border-color: #8a987d;
@@ -3054,11 +3056,6 @@ details p {
 
 .battlefield .tag {
   background: #293222 !important;
-}
-
-.battlefield .btn.primary {
-  background: #c4f36b !important;
-  color: #1b2513 !important;
 }
 
 .battlefield .btn.secondary {
@@ -3514,11 +3511,6 @@ details p {
   border-color: #4a6347;
 }
 
-.battle-dialog .btn.primary {
-  background: #c4f36b;
-  color: #1b2513;
-}
-
 .battle-dialog .game-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 220px;
@@ -3804,4 +3796,64 @@ details p {
     inset: var(--battle-topline, 32px) 0 0;
     padding: 10px;
   }
+}
+
+/* 11. Trạng thái nút thống nhất; đặt sau theme để màu hover không ghi đè vùng game tối. */
+:where(.hero, .battlefield, .battle-dialog) {
+  --control-disabled-bg: #30392f;
+  --control-disabled-text: #b8c2af;
+  --control-disabled-border: #5c6b55;
+}
+
+:root :is(.hero, .battlefield, .battle-dialog) .btn.primary {
+  background: #c4f36b;
+  color: #1b2513;
+}
+
+:root :is(.hero, .battlefield, .battle-dialog) .btn.primary:hover:not(:disabled) {
+  background: #d1fc84;
+  color: #1b2513;
+}
+
+:root :is(.hero, .battlefield, .battle-dialog) .btn.secondary:hover:not(:disabled) {
+  background: #35422b;
+  color: #f1f3e9;
+}
+
+/* Disabled nghiệp vụ dùng màu riêng, vẫn đọc được nhãn; không giảm opacity của cả phần tử. */
+:root :is(.btn, .icon-button, .tab):disabled:not([aria-busy="true"]) {
+  background: var(--control-disabled-bg);
+  color: var(--control-disabled-text);
+  border-color: var(--control-disabled-border);
+  transform: none;
+}
+
+/* Đang chờ khác với không đủ điều kiện: giữ màu nút gốc, chặn bấm lặp và hiện vòng chờ. */
+:root :is(.btn, .icon-button, .tab)[aria-busy="true"] {
+  cursor: progress;
+  transform: none;
+}
+
+:is(.btn, .icon-button, .tab)[aria-busy="true"]::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+
+.icon-button[aria-busy="true"] {
+  position: relative;
+}
+
+.icon-button[aria-busy="true"]::before {
+  position: absolute;
+}
+
+.icon-button[aria-busy="true"]>.icon {
+  visibility: hidden;
 }

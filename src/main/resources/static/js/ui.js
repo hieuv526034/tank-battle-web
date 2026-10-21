@@ -69,6 +69,22 @@ export const button = (label, symbol, path, style = 'primary') =>
   `
     <a class="btn ${style}" data-link href="${esc(path)}">${symbol ? icon(symbol) : ''}${esc(label)}</a>
     `;
+/**
+ * Khóa lặp thao tác trong khi chờ nhưng giữ nhãn/màu nút và thông báo aria-busy.
+ * Hàm trả về khôi phục đúng trạng thái ban đầu; caller luôn gọi trong finally, kể cả lỗi/hủy.
+ */
+export function setButtonBusy(element) {
+  if (!element) return () => {};
+  const disabled = element.disabled;
+  const previousBusy = element.getAttribute('aria-busy');
+  if ('disabled' in element) element.disabled = true;
+  element.setAttribute('aria-busy', 'true');
+  return () => {
+    if ('disabled' in element) element.disabled = disabled;
+    if (previousBusy === null) element.removeAttribute('aria-busy');
+    else element.setAttribute('aria-busy', previousBusy);
+  };
+}
 /** Hiện thông báo tạm thời có role phù hợp; nội dung API luôn qua escape. */
 export function toast(message, error = false) {
   const element = document.createElement('div');

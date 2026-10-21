@@ -3,6 +3,7 @@
 Cập nhật 21/10/2026. Đọc cùng [UI/offline](25-giao-dien-va-offline.md) và [STATUS](STATUS.md).
 
 Bố cục/focus hiện tại dùng header ngoài vùng cuộn và native dialog cho bàn chơi; đọc [29](29-sua-loi-va-bo-cuc-ban-choi.md).
+Màu nút disabled/đang xử lý, helper setButtonBusy và kiểm browser mới đọc [31](31-trang-thai-nut-va-theme.md).
 
 ## Bản đồ file và thứ tự đọc
 

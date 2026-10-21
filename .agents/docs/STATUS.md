@@ -15,6 +15,13 @@ Cập nhật 21/10/2026, Asia/Saigon. Đã triển khai UI; không coi kế ho�
 
 ## Lượt thay đổi hiện tại
 
+### Sửa nút bị tối khi bấm/disabled — 21/10/2026
+
+- Trước sửa, Chromium xác nhận button:disabled opacity .45 áp dụng cả nút chờ Promise. Đã thay bằng palette disabled riêng dark/light (không mờ chữ/icon), phân biệt aria-busy giữ màu + vòng chờ/cursor progress. Hover bỏ nút disabled; màu primary/secondary vùng hero/bàn chơi được gom để theme sáng không ghi đè sai.
+- Thêm ui.setButtonBusy dùng chung click/submit, giữ nhãn và khôi phục disabled/aria-busy trong finally; vẫn chặn request lặp, không đổi điều kiện quyền/ready/network/slot. Theme tức thời không disable thoáng qua. JS/CSS format và chú thích tiếng Việt; chi tiết tài liệu 31.
+- Harness Chromium headless riêng với app.html/CSS/module thật và API giả đạt dark/light, disabled/busy, hover/active vùng game, login lỗi + chống submit lặp, theme và hủy xác nhận; pageerror rỗng. Đã xem ảnh build/verification/buttons-after-dark.png và buttons-after-light.png. Không khởi động Spring, không dùng Neon hoặc tab người dùng; harness không đưa vào source/CI.
+- Kiểm cuối: JS syntax đạt; Gradle spotlessCheck, 6 SourceContractTest và bootJar đạt; git diff --check đạt. XML test hiện tại là lượt lọc 6 test, không phải full 86; không chạy lại PostgreSQL vì không sửa backend/DB. Fingerprint UI tự đổi khi processResources. Không đổi Java/backend/DB/env/key hoặc commit/push/deploy; commit người dùng hiện tại df3f8b8 đã chứa lượt sửa trước.
+
 ### Rà soát phần còn lại trước commit — 21/10/2026
 
 - Kiểm source, workflow backend-ci.yml, controller catalog, runtime/recovery và báo cáo hiện có: 86 test Java/39 test PostgreSQL, 0 failure/error/skipped, sinh lúc 11:06/11:07 ngày 21/10. Đây là đọc bằng chứng lượt trước, không phải chạy lại test hoặc nghiệm thu toàn bộ hệ thống trong lượt này. Không phát hiện thêm lỗi build từ phạm vi rà soát; không kết luận source hết lỗi.

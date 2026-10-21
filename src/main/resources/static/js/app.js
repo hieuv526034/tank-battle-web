@@ -37,6 +37,7 @@ import {
   modalHead,
   closeModal,
   confirmAction,
+  setButtonBusy,
   formError
 } from './ui.js';
 import {
@@ -2340,16 +2341,14 @@ document.addEventListener('click', event => {
     return;
   }
   const element = event.target.closest('[data-action]');
-  if (!element || element.disabled) return;
+  if (!element || element.disabled || element.getAttribute('aria-busy') === 'true') return;
+  // Các thao tác hiển thị tức thời không cần chớp trạng thái disabled/đang xử lý.
   const mayDisable = !['password', 'menu', 'close-menu', 'filter-rooms', 'pause-solo',
-    'close-modal'
+    'close-modal', 'theme'
   ].includes(element.dataset.action);
-  const originallyDisabled = element.disabled;
-  if (mayDisable) element.disabled = true;
+  const restoreButton = mayDisable ? setButtonBusy(element) : () => {};
   Promise.resolve(handleAction(element)).catch(error => toast(error.message, true)).finally(
-    () => {
-      if (mayDisable && element.isConnected) element.disabled = originallyDisabled;
-    });
+    restoreButton);
 });
 /** Chặn submit mặc định, khóa nút khi gửi và hiện lỗi mà không reload vỏ trang. */
 document.addEventListener('submit', event => {
@@ -2359,20 +2358,13 @@ document.addEventListener('submit', event => {
   if (form.dataset.busy) return;
   form.dataset.busy = 'yes';
   const submit = form.querySelector('[type=submit]') || form.querySelector('button');
-  const previous = submit?.innerHTML;
-  if (submit) {
-    submit.disabled = true;
-    submit.innerHTML = '<span class="loader"></span> Đang xử lý…';
-  }
+  const restoreButton = setButtonBusy(submit);
   submitForm(form).catch(error => {
     if (form.querySelector('.error-box')) formError(form, error);
     else toast(error.message, true);
   }).finally(() => {
     delete form.dataset.busy;
-    if (submit?.isConnected) {
-      submit.disabled = false;
-      submit.innerHTML = previous;
-    }
+    restoreButton();
   });
 });
 document.addEventListener('input', event => {
