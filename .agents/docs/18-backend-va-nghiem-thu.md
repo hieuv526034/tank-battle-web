@@ -15,7 +15,7 @@ Yêu cầu: hoàn thiện nghiệp vụ BE, kiểm thử và tài liệu; UI ch�
 
 Bằng chứng số test/build đọc [STATUS](STATUS.md). Luồng và tiêu chí đọc [tài liệu 20](20-luong-backend-va-test.md), endpoint đọc [API](11-swagger-va-api.md).
 
-UI/Canvas/engine JS/IndexedDB/Service Worker sẽ thực hiện ở giai đoạn sau. Backend đồng bộ save không tự tạo khả năng offline trong browser.
+Theo yêu cầu mới ngày 21/10/2026, đã triển khai UI/Canvas/engine JS/IndexedDB/Service Worker; xem [tài liệu 25](25-giao-dien-va-offline.md). Đây là phần triển khai sau nghiệm thu backend; gameplay và offline browser xuyên suốt vẫn cần kiểm tra.
 
 Google thật cần OAuth Client; deploy public cần HTTPS/RSA keys và backup. Source đã có Git repository và cấu hình GitHub CI/Render; chưa xác nhận các job Docker/GitHub hoặc luồng HTTPS/WebSocket production trong phiên hỗ trợ này.
 

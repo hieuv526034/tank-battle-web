@@ -1,6 +1,6 @@
 # Hồ sơ source UTC Tank Battle
 
-Đây là nơi lưu quy ước, thiết kế, luồng xử lý, bằng chứng kiểm thử và bàn giao để người/AI khác tiếp tục source. Backend Java 21/Spring Boot 3.5.16/Gradle 8.14.6; package vn.edu.utc.tankbattle. UI/Canvas và offline browser chưa triển khai.
+Đây là nơi lưu quy ước, thiết kế, luồng xử lý, bằng chứng kiểm thử và bàn giao để người/AI khác tiếp tục source. Backend Java 21/Spring Boot 3.5.16/Gradle 8.14.6; package vn.edu.utc.tankbattle. Đã có giao diện Thymeleaf/Canvas, engine solo JavaScript, IndexedDB và Service Worker; kiểm gameplay browser còn chưa hoàn tất, xem tài liệu 25 và STATUS.
 
 ## Thứ tự đọc
 
@@ -9,7 +9,8 @@
 3. [HANDOFF](docs/HANDOFF.md): bước tiếp tục, các quyết định và điều dễ sửa sai.
 4. [Quy hoạch package](docs/17-quy-hoach-package.md), [luồng backend](docs/20-luong-backend-va-test.md), [bản đồ cấu hình/service](docs/21-doc-code-cau-hinh-service.md).
 5. [API/Swagger](docs/11-swagger-va-api.md), [auth](docs/09-auth-jwt-google.md), [bootstrap admin](docs/24-bootstrap-admin-va-phan-quyen.md).
-6. [Gradle](docs/23-gradle-va-thymeleaf.md), [Render/CI](docs/22-github-render-cicd.md), [Neon](docs/19-neon-production.md).
+6. [UI và offline](docs/25-giao-dien-va-offline.md), [đọc code/theme/mobile](docs/26-doc-ui-theme-va-mobile.md), [hình ảnh/hiệu năng/luồng game](docs/27-hinh-anh-hieu-nang-va-luong-game.md), giấy phép [tài nguyên UI](../THIRD_PARTY_NOTICES.md).
+7. [Gradle](docs/23-gradle-va-thymeleaf.md), [Render/CI](docs/22-github-render-cicd.md), [Neon](docs/19-neon-production.md).
 
 Các tài liệu 00–08 là kế hoạch/thiết kế gốc, không thay thế STATUS. Tài liệu 10/16 mô tả độ khó, cửa, địch/item/điểm; 12/13 mô tả lỗi/validation/transaction; 14/15 mô tả Instant và H2/seed.
 
@@ -42,4 +43,4 @@ Chỉ cần JDK 21; Wrapper tải Gradle/dependency. Không có Node/npm trong b
 
 Theo yêu cầu chủ đồ án, .env/render.env và toàn bộ secrets/ gồm cặp JWT PEM được phép commit; không in giá trị/key vào tài liệu/log. Docker loại env/key khỏi image. Render vẫn cần import env và thêm Secret Files. Không dùng Neon production chạy test.
 
-Database production neondb/schema tank_battle; direct endpoint cùng Hikari 5 kết nối, JDBC/JPA/Flyway thống nhất schema. Bản kiểm chứng mới nhất: 79 test Java, 35 test PostgreSQL 18.6 và prod-profile JAR trên DB test mới; admin login/API quản trị/API phòng đạt. Đọc STATUS trước khi dùng số liệu này cho phiên bản source khác.
+Database production neondb/schema tank_battle; direct endpoint cùng Hikari 5 kết nối, JDBC/JPA/Flyway thống nhất schema. Lượt UI đã chạy 81 test Java/build; số liệu PostgreSQL/prod smoke trước UI vẫn là 35 test và JAR trên DB test mới. Chưa chạy lại PostgreSQL hoặc Render cho UI. Đọc STATUS trước khi dùng số liệu này cho phiên bản source khác.

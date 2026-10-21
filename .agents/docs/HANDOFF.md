@@ -1,6 +1,34 @@
 # Bàn giao tiếp tục source
 
-Cập nhật 20/10/2026. Đọc [quy ước](../AGENTS.md), [STATUS](STATUS.md), [luồng backend](20-luong-backend-va-test.md) và [bootstrap admin](24-bootstrap-admin-va-phan-quyen.md).
+Cập nhật 21/10/2026. Đọc [quy ước](../AGENTS.md), [STATUS](STATUS.md), [luồng backend](20-luong-backend-va-test.md) và [bootstrap admin](24-bootstrap-admin-va-phan-quyen.md).
+
+## Tiếp tục sau lượt hình ảnh/hiệu năng và nghiệm thu 21/10/2026
+
+- Đọc [27](27-hinh-anh-hieu-nang-va-luong-game.md). Cache địa hình/sprite và snapshot hiển thị không được ghi ngược state; nội suy chỉ phục vụ hình ảnh. HUD dùng WeakMap theo element, không đưa lại innerHTML không đổi vào mỗi tick.
+- Giữ chú thích tiếng Việt sát từng luồng và format toàn bộ JS/HTML/CSS. Không thêm package.json/Node tests/frontend build hoặc thay engine/migration khi chỉ đổi hình.
+- authUnavailable phản ánh lỗi truy cập server, không phải quyền đăng nhập. Trang dùng IndexedDB chờ authReady; không chọn scope chỉ bằng navigator.onLine hoặc mở guest trước khi khôi phục user.
+- Người dùng đã cho phép test tạo tài khoản/phòng/chơi/save trên H2 tạm, thay giới hạn chỉ xem UI trước đó. Các luồng đã kiểm và giới hạn xem STATUS/27; Java/preview không chứng minh parity JS/Java hay đa ngón trên máy thật.
+- Quyền mới: người dùng yêu cầu commit và push với nội dung tiếng Việt chi tiết rồi tắt máy sau commit 10 phút. Không áp dụng lại hướng dẫn lịch sử “không tự commit/push” cho lượt này. Giữ nguyên chính sách env/secrets đã có, không in giá trị.
+- Trước lượt nghiệm thu tiếp cần mở lại preview test riêng; hai JVM 18081 đã dừng. Tab thử đóng/viewport reset; giữ tab người dùng 18080. Chưa test Render/Google thật, FPS/RAM điện thoại hoặc online nhiều người/recovery restart.
+
+## Tiếp tục sau lượt format/theme/mobile 21/10/2026
+
+- Đọc [tài liệu 26](26-doc-ui-theme-va-mobile.md). JS/HTML/CSS đã format, có mô tả tiếng Việt sát hàm; giữ cách viết này khi mở rộng. Không thêm package.json/Node tests/Prettier hoặc frontend build bắt buộc.
+- theme.js là script đồng bộ trước CSS; app.js chỉ gửi sự kiện theme-preference. Giữ đổi theme không dựng lại main/Canvas; palette sáng/tối, localStorage và asset precache đã có. Nút topbar đổi nhanh, Hướng dẫn có chế độ theo thiết bị.
+- GameControls theo từng pointerId; không quay lại một boolean chung cho mọi ngón. Giữ capture/cancel/reset, d-pad trượt và bàn phím đồng thời. Breakpoint menu trong matchMedia phải khớp CSS, gồm cửa sổ ngang thấp; dùng any-pointer:coarse cho nút cảm ứng.
+- Đã chạy full build/Spotless 81 test Java và syntax JS; sau chỉnh source cuối chạy lại 24 test auth/source cùng bootJar đạt. Report XML hiện là 24 test được lọc, không phải full suite còn 24. Browser chỉ xem bố cục/theme, 320/390 và 844x390, update worker, không tràn ngang/console error ở bản cuối. Ảnh và giới hạn xem STATUS. Preview 18081 đã dừng, tab thử đã đóng và viewport đã reset.
+- Người dùng vẫn chỉ cho xem UI và test Java. Chưa được chơi/tạo tài khoản/phòng/trận/save bằng browser/API preview. Đa ngón trên điện thoại thật, offline gameplay/cloud, engine parity và Render vẫn chưa nghiệm thu; không mặc định đã chơi được trên mọi Android/iOS chỉ từ responsive preview.
+
+## Tiếp tục sau lượt UI 21/10/2026
+
+- UI đã triển khai theo yêu cầu người dùng; đọc [tài liệu 25](25-giao-dien-va-offline.md) trước mở rộng, không bắt đầu lại từ skeleton. Code ở templates/app.html và static/css, js, icons, fonts; không thêm package.json/Node tests hoặc CDN bắt buộc.
+- Giữ vỏ HTML công khai không chứa user/CSRF/token, auth/session no-store và API Bearer riêng. Offline giữ access token trong RAM; localStorage chỉ có hint/vùng IndexedDB, không JWT. Đừng đưa tài nguyên/API auth vào Service Worker cache.
+- Kết quả UI: 81 test Java/build/Spotless đạt, JS syntax đạt; browser kiểm bố cục/điều hướng/form, menu mobile 390px và cập nhật Service Worker; không tràn ngang/console error ở bản cuối. Ảnh ở build/verification/ui-home.jpg, ui-home-full.jpg, ui-mobile.jpg; JVM/tab preview đã dừng/đóng. PostgreSQL 35 test/prod smoke phía dưới là kết quả trước UI. Không dùng Neon cho nghiệm thu.
+- Người dùng chọn chỉ kiểm tra giao diện và test Java sau automatic approval chặn tạo phòng. Không tiếp tục tạo tài khoản/phòng/trận/bản lưu hoặc lách qua API preview. Cần yêu cầu mới của người dùng để chơi/lưu/sync end-to-end bằng browser; hiện không coi các luồng này đã kiểm chứng.
+- Việc tiếp theo: nghiệm thu gameplay/Canvas/touch, nhiều tab/hết JWT, mất mạng/reload/save/restore/cloud conflict trên môi trường test; Google thật/HTTPS-WebSocket Render, tải/RAM, Docker/CI và CRUD admin nếu mở rộng. Không tự deploy hoặc commit/push.
+- Mọi thay asset/template đổi fingerprint Service Worker khi build; worker mới chờ nút cập nhật khi đã rời trận. Giữ schema 2/save snapshot catalog và revision 0 khi cloud slot thiếu/tombstone.
+
+Các mục sau giữ lịch sử quyết định backend; hướng dẫn “chỉ làm UI khi được yêu cầu” đã được đáp ứng ở lượt này.
 
 ## Quyết định hiện tại
 
@@ -72,4 +100,4 @@ Sau sửa tài liệu, SourceContractTest 6/6 và exporter chạy với fixture 
 
 Render Free + Neon, repo hieuv526034/tank-battle-web, URL tank-battle-web.onrender.com. Người dùng tự push. **Trước deploy import lại render.env:** datasource/Flyway đã đổi sang direct/neondb/currentSchema=tank_battle, có BOOTSTRAP_ADMIN_*; giữ RSA Secret Files. Auto-Deploy After CI Checks Pass; chỉ phát hành khi không còn trận chơi vì chưa có ownership runtime. Không dùng Neon test/migrate thử. Nếu public đã có dữ liệu từ bản cũ, cần chuyển schema/history sau backup; đổi config không tự chuyển bảng cũ.
 
-Khi người dùng yêu cầu UI, mới xây Thymeleaf/Canvas/engine JS/IndexedDB/Service Worker/reconnect và test browser. Trước mở rộng quản trị catalog cần thiết kế API ADMIN, validation/versioning và bảo vệ cấu hình của trận đang chạy.
+UI đã có Thymeleaf/Canvas/engine JS/IndexedDB/Service Worker/reconnect; tiếp tục kiểm browser theo phạm vi người dùng cho phép và tài liệu 25. Trước mở rộng quản trị catalog cần thiết kế API ADMIN, validation/versioning và bảo vệ cấu hình của trận đang chạy.

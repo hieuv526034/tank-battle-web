@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="660" height="470" viewBox="0 0 660 470" fill="none">
+<defs><pattern id="grid" width="46" height="46" patternUnits="userSpaceOnUse"><path d="M46 0H0V46" stroke="#849565" stroke-opacity=".19"/></pattern><filter id="shadow"><feGaussianBlur stdDeviation="14"/></filter><linearGradient id="hull" x1="0" y1="0" x2="110" y2="130" gradientUnits="userSpaceOnUse"><stop stop-color="#b9d580"/><stop offset="1" stop-color="#6f8d45"/></linearGradient></defs>
+<g transform="translate(80 80) rotate(-28 250 160) skewX(19)">
+<rect x="15" y="40" width="470" height="340" rx="12" fill="#1a2116" stroke="#53613f"/><rect x="15" y="40" width="470" height="340" rx="12" fill="url(#grid)"/>
+<path d="M38 340H180V230H300V110H445" stroke="#b1cf73" stroke-opacity=".38" stroke-dasharray="6 7" stroke-width="2"/><circle cx="445" cy="110" r="15" stroke="#dd9a58" stroke-dasharray="4 3"/><path d="M440 110h10m-5-5v10" stroke="#edac68"/>
+<g fill="#3d4930" stroke="#5c6c44"><rect x="55" y="98" width="73" height="38" rx="3"/><rect x="55" y="88" width="73" height="38" rx="3" fill="#53633e"/><path d="M80 88v38m24-38v38M55 107h73"/><rect x="331" y="255" width="107" height="38" rx="3"/><rect x="331" y="245" width="107" height="38" rx="3" fill="#53633e"/><path d="M357 245v38m27-38v38m27-38v38M331 264h107"/><rect x="205" y="63" width="36" height="79" rx="3"/><rect x="205" y="53" width="36" height="79" rx="3" fill="#53633e"/><path d="M205 79h36m-36 26h36"/></g>
+<g fill="#627e3d"><circle cx="70" cy="230" r="19"/><circle cx="65" cy="220" r="17" fill="#78984b"/><circle cx="112" cy="260" r="15"/><circle cx="108" cy="251" r="14" fill="#78984b"/><circle cx="400" cy="345" r="16"/><circle cx="396" cy="336" r="15" fill="#78984b"/></g>
+<g transform="translate(361 133) rotate(40)"><rect x="-19" y="-25" width="41" height="55" rx="5" fill="#151b12"/><rect x="-22" y="-27" width="9" height="48" rx="3" fill="#aa7142"/><rect x="13" y="-27" width="9" height="48" rx="3" fill="#aa7142"/><rect x="-13" y="-24" width="26" height="42" rx="4" fill="#d49a64"/><rect x="-9" y="-14" width="18" height="24" rx="5" fill="#e7b17b"/><rect x="-3" y="-40" width="6" height="30" rx="1" fill="#e7b17b"/></g>
+</g>
+<ellipse cx="332" cy="311" rx="119" ry="49" fill="#0d1609" opacity=".75" filter="url(#shadow)"/>
+<g transform="translate(309 235) rotate(-31) skewX(10)">
+<rect x="-79" y="-45" width="44" height="158" rx="14" fill="#1b2318"/><rect x="42" y="-45" width="44" height="158" rx="14" fill="#1b2318"/>
+<rect x="-79" y="-58" width="36" height="151" rx="12" fill="#414e34" stroke="#879764" stroke-width="2"/><rect x="43" y="-58" width="36" height="151" rx="12" fill="#414e34" stroke="#879764" stroke-width="2"/>
+<path d="M-75-39h29m-29 16h29m-29 16h29m-29 16h29m-29 16h29m-29 16h29m-29 16h29m-29 16h29M47-39h28M47-23h28M47-7h28M47 9h28M47 25h28M47 41h28M47 57h28M47 73h28" stroke="#8c9b6f" stroke-width="5"/>
+<path d="M-46-52H42L57-31V76L43 92H-42L-56 73V-33Z" fill="#4a6334"/><path d="M-46-64H42L57-43V64L43 80H-42L-56 61V-45Z" fill="url(#hull)" stroke="#c5df96" stroke-width="2"/>
+<rect x="-35" y="45" width="67" height="22" rx="3" fill="#4e6a35"/><path d="M-28 50v11m10-11v11m10-11v11m10-11v11m10-11v11m10-11v11" stroke="#9ab66e" stroke-width="4"/>
+<path d="M-34-31H29L40-17V28L27 43H-28L-41 29V-18Z" fill="#445c2c"/><path d="M-34-43H29L40-29V16L27 31H-28L-41 17V-30Z" fill="#a6c975" stroke="#d0e9a5" stroke-width="2"/>
+<circle cx="-2" cy="-4" r="19" fill="#7d9e51" stroke="#c3df94" stroke-width="2"/><circle cx="-2" cy="-7" r="12" fill="#566f35"/><path d="M-8-30h14v-80H-8Z" fill="#c1dd94" stroke="#d8edb4" stroke-width="2"/><path d="M-10-112h18v-18h-18Z" fill="#7d9b51" stroke="#c3df94" stroke-width="2"/>
+<path d="M21 48h8m-4-4v8" stroke="#d5e8ae" stroke-width="2"/><path d="M-45-52l9-7m73 7l8 8" stroke="#efffd2" stroke-width="3"/>
+</g>
+<g stroke="#c4f36b" stroke-opacity=".65"><path d="M218 150h-16v16M412 151h16v16M218 340h-16v-16M412 340h16v-16" stroke-width="1.5"/><path d="M208 368h103m7 0h18" stroke-dasharray="2 4"/></g>
+<text x="220" y="387" fill="#b0c58b" font-family="monospace" font-size="9" letter-spacing="2">UTC / MAIN BATTLE TANK</text>
+</svg>

@@ -72,3 +72,7 @@ Xem [Render](22-github-render-cicd.md), [bootstrap admin](24-bootstrap-admin-va-
 - Cache GitHub không chia sẻ trực tiếp sang Render. Render vẫn tự build Dockerfile và có cache riêng. Lần đầu phải tạo cache; chưa có số đo thời gian trước/sau trên GitHub.
 
 Tham chiếu: [Gradle caching](https://github.com/gradle/actions/blob/v5/docs/setup-gradle.md), [Docker GitHub cache](https://docs.docker.com/build/ci/github-actions/cache/).
+
+## UI Thymeleaf và cache offline
+
+Thymeleaf trả vỏ app.html, static ES modules/CSS/SVG/font được đóng gói vào JAR. Không có frontend build hoặc CDN runtime. processResources tính SHA-256 trên static/template rồi thay @UI_REVISION@ trong sw.js; cache offline đổi theo nội dung khi build, kể cả bootJar trong Docker. Test shell kiểm placeholder đã được thay. Không dùng template chứa user/CSRF cho cache offline. Đọc [tài liệu 25](25-giao-dien-va-offline.md).

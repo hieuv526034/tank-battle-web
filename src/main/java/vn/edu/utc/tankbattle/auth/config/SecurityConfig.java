@@ -194,6 +194,18 @@ public class SecurityConfig {
         http.authorizeHttpRequests(
                         access ->
                                 access.requestMatchers(
+                                                HttpMethod.GET,
+                                                "/rooms",
+                                                "/rooms/{code}",
+                                                "/play/{id}",
+                                                "/history",
+                                                "/profile",
+                                                "/saves",
+                                                "/help",
+                                                "/offline",
+                                                "/auth/session")
+                                        .permitAll()
+                                        .requestMatchers(
                                                 "/",
                                                 "/ws/game",
                                                 "/login",
@@ -203,6 +215,7 @@ public class SecurityConfig {
                                                 "/css/**",
                                                 "/js/**",
                                                 "/icons/**",
+                                                "/fonts/**",
                                                 "/game-rules.json",
                                                 "/game-content.json",
                                                 "/campaign-stages.json",

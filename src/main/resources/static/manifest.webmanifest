@@ -1,0 +1,12 @@
+{
+  "id": "/offline",
+  "name": "UTC Tank Battle",
+  "short_name": "Tank Battle",
+  "lang": "vi",
+  "start_url": "/offline",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#111411",
+  "theme_color": "#111411",
+  "icons": [{ "src": "/icons/tank.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

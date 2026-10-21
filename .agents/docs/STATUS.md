@@ -1,6 +1,6 @@
-# Trạng thái backend
+# Trạng thái ứng dụng
 
-Cập nhật 20/10/2026, Asia/Saigon. Backend trước UI; không coi kế hoạch gốc là bằng chứng tính năng đã chạy.
+Cập nhật 21/10/2026, Asia/Saigon. Đã triển khai UI; không coi kế hoạch gốc hoặc source hiện có là bằng chứng browser gameplay đã chạy.
 
 ## Đã triển khai
 
@@ -14,6 +14,41 @@ Cập nhật 20/10/2026, Asia/Saigon. Backend trước UI; không coi kế hoạ
 - Javadoc tiếng Việt cho các hàm cấu hình/service/runtime/engine/socket; tài liệu luồng đầy đủ trong .agents/docs.
 
 ## Lượt thay đổi hiện tại
+
+
+### Hoàn thiện hình game, hiệu năng, chú thích và kiểm thử xuyên luồng — 21/10/2026
+
+- Thêm game-art.js: vector xe tăng/ba loại địch/năm item, sprite 3x cache hữu hạn và nền bản đồ cache khi đổi map/resize; hai SVG mode card. Renderer chỉ chụp dữ liệu hiển thị, nội suy cả đạn, hạt theo mili giây có trần, tôn trọng reduced motion, dừng vẽ tab ẩn và thu hồi tài nguyên khi dispose. Không đổi luật/va chạm/HP/điểm/seed.
+- HUD máu/điểm/mục tiêu, thanh HP địch, legend vật phẩm và nút hướng SVG; giảm cập nhật DOM bằng signature/WeakMap. Vòng solo xuất snapshot/HUD một lần sau các tick bắt kịp, vẫn tick 50 ms và autosave 40 tick. Nút cảm ứng có fallback viewport hẹp; giữ theme/safe area/mobile từ lượt trước.
+- Bổ sung chú thích tiếng Việt sát luồng router, snapshot, cache, autosave queue, kết toán local nguyên tử, WebSocket/server authority và đồng bộ revision; bản đồ đọc code trong [27](27-hinh-anh-hieu-nang-va-luong-game.md).
+- Tìm và sửa lỗi scope khi server không truy cập được nhưng navigator.onLine còn true: authUnavailable chỉ chọn vùng local; trang dùng IndexedDB đợi authReady để không mở nhầm slot guest trước khi biết userId. Đăng xuất chủ động vẫn về guest; không dùng hint local để xác thực API.
+- Người dùng đã cho phép mở rộng kiểm thử H2 tạm. Browser tại 18081: đăng ký/login, tạo phòng/Campaign/EASY, ready/socket/start, di chuyển/bắn, kết quả server/lịch sử; solo Arena/Campaign, pause/autosave/restore/kết quả local; upload revision 1 và tải về; khóa slot hai tab đạt. Sau sửa scope, reload slot 2 của admin đúng tài khoản; dừng JVM và reload qua SW vẫn mở đúng snapshot tài khoản, chơi/lưu local được. Không dùng Neon.
+- Viewport 320/390 và 844x390 không tràn ngang; theme sáng/tối, nút hướng portrait 46px và worker update đạt. Console online cuối rỗng; lỗi mạng khi đã tắt server là dự kiến. Ảnh và giới hạn trong tài liệu 27. Không cam kết FPS hoặc mọi Android/iOS chỉ từ preview.
+- Build/Spotless full 81 test Java đạt; sau sửa scope chạy lại 24 test auth/source cùng bootJar đạt, không cộng số lượt thành test độc lập. Nghiệm thu cuối chạy spotlessCheck build offline đạt 81 test, 0 failure/error/skipped; XML hiện tại là full suite 81 test. Kiểm cú pháp toàn bộ JS/sw và kiểm tài nguyên precache trong JAR đạt. Chưa chạy lại PostgreSQL/Render cho UI; không đổi Java engine/env/key/migration.
+- Người dùng đã yêu cầu tự động commit/push toàn bộ phần UI đang sửa và tắt máy sau commit 10 phút. Quyền mới thay hướng dẫn lịch sử “người dùng tự push/chưa commit” ở các mục cũ. Trạng thái thực tế commit/push được báo bằng Git ở cuối lượt.
+
+
+### Format và mô tả UI, nền sáng/tối, Android/iOS — 21/10/2026
+
+- Format toàn bộ JS/HTML/CSS, cả template literal chứa HTML và biểu thức dựng trang. Thêm mô tả tiếng Việt sát các hàm/luồng router, auth, IndexedDB, engine, renderer, socket, form/event và Service Worker. Không thêm Node/npm/Prettier vào ứng dụng/CI; formatter tạm ở build bị Git bỏ qua.
+- Thêm theme.js chạy trước CSS, nút đổi nhanh topbar và ba lựa chọn Theo thiết bị/Nền sáng/Nền tối trong Hướng dẫn. Nhớ lựa chọn localStorage, đồng bộ tab/hệ điều hành, cập nhật theme-color; đổi nền không dựng lại main/Canvas. Bổ sung palette sáng cho form/card/tag/bảng/dialog; sửa tương phản nhãn hero và bóng menu đã đóng.
+- GameControls dùng Map theo pointerId, vừa hướng vừa bắn, trượt đổi hướng, thả/hủy đúng ngón; reset khi blur/ẩn tab/pause/dialog/dispose và hiển thị pressed/aria-pressed. Bổ sung safe area, svh/dvh, nút coarse tối thiểu 44px, input mobile 16px, menu gọn khi xoay ngang, bố cục trận ngang với panel phụ ẩn. Fetch timeout dùng AbortController thay phụ thuộc AbortSignal.timeout, thông báo timeout tiếng Việt; không tự retry mutation do lỗi mạng.
+- Nhãn sẵn sàng offline trên trang solo cập nhật khi worker tải đủ, giữ form đang chọn; tiêu đề hẹp không bị ép còn một cột chữ. theme.js được precache và test shell kiểm asset công khai; giữ cache không chứa API/auth/CSRF.
+- Đã chạy node --check các module/sw và spotlessApply build offline: 81 test Java, 0 failure/error/skipped. Sau các chỉnh UI nhỏ cuối và tài liệu, chạy spotlessCheck test --tests '*AuthSystemTest' --tests '*SourceContractTest' bootJar đạt 24 test, 0 failure/error/skipped; không cộng thành 105 test độc lập. XML hiện tại ở build/test-results/test là lượt lọc 24 test. JAR/fingerprint đã đóng gói sau thay đổi source cuối.
+- Browser preview test H2 in-memory riêng tại 127.0.0.1:18081: xem trang chủ/login/solo setup/hướng dẫn/bản lưu/bảng hạng, desktop 1280, portrait 320/390 và landscape 844x390. Các trang đã đo không tràn ngang; đổi sáng/tối, reload giữ lựa chọn, Theo thiết bị/aria-pressed, menu mobile và kích hoạt worker mới đạt; console error rỗng ở bản cuối. Ảnh build/verification/ui-theme-light.jpg, ui-theme-dark.jpg, ui-mobile-light.jpg, ui-mobile-dark.jpg, ui-landscape-light.jpg. Tab preview đã đóng, viewport đã reset; JVM preview đã dừng. Giữ nguyên tab người dùng ở 18080.
+- Theo lựa chọn người dùng chỉ xem UI và test Java: không tạo tài khoản/phòng/trận/save hoặc chơi qua browser/API. Chưa thử nhiều ngón/Canvas gameplay trên Android/Safari iOS thật; chưa kiểm offline gameplay/cloud, parity JS/Java, Google thật hoặc Render HTTPS/WebSocket. Không kết nối Neon, không sửa env/key/migration, không commit/push. Tài liệu mới [26](26-doc-ui-theme-va-mobile.md).
+
+
+### Giao diện tiếng Việt và solo offline — 21/10/2026
+
+- Thêm vỏ Thymeleaf và layout tối/olive/lime thích ứng desktop/mobile, hero SVG; trang chủ/auth/hồ sơ/phòng/lobby/Canvas/bảng hạng/lịch sử/solo/bản lưu/hướng dẫn. Lucide 0.468.0 và Be Vietnam Pro đóng gói cùng giấy phép, không CDN/npm/frontend build.
+- WebPageController chỉ trả vỏ công khai, dữ liệu riêng giữ Bearer API. Thêm GET /auth/session no-store cho CSRF phiên web; form login → session exchange → JWT RAM, refresh cookie HttpOnly, Web Locks/BroadcastChannel. Bổ sung Swagger/Accept-Language; hai test AuthSystemTest kiểm shell/API quyền/CSRF/login/JWT/fingerprint đóng gói.
+- Engine JS schema 2 cho solo/bot/Campaign; Canvas/điều khiển keyboard/touch; IndexedDB ba slot theo guest/user, vùng lưu gần nhất khi reload offline, kết toán local nguyên tử, khóa slot đa tab và sync cloud/revision/conflict. WebSocket client dùng ticket/sequence/sync/recovery; không gửi điểm offline lên ranking online.
+- Service Worker chỉ precache vỏ công khai/asset/catalog, không API/auth. Gradle tạo fingerprint SHA-256 từ tài nguyên; nút cập nhật yêu cầu rời màn hình trận. Xóa bản cloud đưa metadata local về revision 0, giữ tombstone server.
+- Đã chạy node --check cho các module/sw, spotlessApply build offline: 81 test Java, 0 failure/error/skipped. Test Java dùng DB test riêng. Chưa chạy lại PostgreSQL/prod smoke trong lượt UI; các số 35 test PostgreSQL ở mục lịch sử thuộc source trước UI.
+- Preview H2 in-memory/test classpath chỉ bind 127.0.0.1:18080; không .env/Neon. Đăng nhập bằng fixture và xem sảnh thành công trước lúc người dùng giới hạn thao tác. Sau automatic approval chặn tạo phòng, người dùng chọn “Chỉ kiểm tra giao diện và test Java”; không tạo phòng/tài khoản/trận/save qua browser hoặc API preview. Đã kiểm trang chủ/auth/solo setup/bảng hạng/lịch sử/bản lưu, desktop mặc định và mobile 390px, không tràn ngang. Menu mobile mở/đóng được; nút cập nhật Service Worker đã chuyển sang UI mới thành công. Console bản cuối không có error. Ảnh: build/verification/ui-home.jpg, ui-home-full.jpg và ui-mobile.jpg. JVM preview đã dừng, tab thử đã đóng. Sau chỉnh CSS sidebar cuối đã đóng gói bootJar đạt; không thêm thay đổi Java sau 81 test.
+- Chưa chứng minh parity engine JS/Java, chơi thật/keyboard/touch, offline reload/lưu/khôi phục/cloud conflict, Google thật hoặc HTTPS/WebSocket Render. Không deploy/commit/push. Tài liệu mới [25](25-giao-dien-va-offline.md); giữ nguyên env/key và migration V1–V6.
+
 
 ### Đồng bộ mật khẩu bootstrap admin theo yêu cầu người dùng
 
@@ -105,7 +140,7 @@ Báo cáo Java: build/reports/tests/test và build/test-results/test. PostgreSQL
 
 ## Giới hạn và việc chưa kiểm chứng
 
-- Chưa có UI/Canvas, JS engine, IndexedDB/Service Worker hoặc offline browser thật; làm khi người dùng yêu cầu.
+- Đã có UI/Canvas, JS engine, IndexedDB/Service Worker; còn cần nghiệm thu gameplay browser, offline reload/save/restore, nhiều tab và cloud conflict. Người dùng hiện chỉ cho kiểm tra giao diện và test Java.
 - Có vai trò/admin bootstrap và API kiểm quyền; catalog gameplay hiện ở JSON, chưa có CRUD API hay màn hình quản trị catalog.
 - Google thật cần OAuth Client; chưa thử callback thật. Session web ở RAM, restart cần đăng nhập lại.
 - Hiện đã có Git repository; người dùng tự push repo hieuv526034/tank-battle-web. Workflow GitHub/Docker/public Render chưa được chạy thật tại máy này.

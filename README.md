@@ -1,6 +1,17 @@
-# UTC Tank Battle Backend
+# UTC Tank Battle
 
-Backend Java 21, Spring Boot 3.5.16, Gradle Wrapper 8.14.6, Thymeleaf và PostgreSQL. Ứng dụng chỉ dùng môi trường `prod`; H2 chỉ dành cho test. Package `vn.edu.utc.tankbattle`. UI/Canvas và offline browser chưa triển khai.
+Game xe tăng với giao diện tiếng Việt, phòng chơi online và solo trong trình duyệt. Java 21, Spring Boot 3.5.16, Gradle Wrapper 8.14.6, Thymeleaf và PostgreSQL. Ứng dụng chỉ dùng môi trường `prod`; H2 chỉ dành cho test. Package `vn.edu.utc.tankbattle`.
+
+## Giao diện
+
+- Trang chủ, đăng ký/đăng nhập, hồ sơ, phòng chờ, bảng hạng và lịch sử.
+- Canvas online qua WebSocket; solo Arena/Campaign bằng engine JavaScript.
+- Ba bản lưu IndexedDB, đồng bộ đám mây có kiểm tra phiên bản, tài nguyên offline qua Service Worker.
+- Giao diện sáng/tối/theo thiết bị, thích ứng điện thoại; Lucide và font Be Vietnam Pro được đóng gói sẵn, không cần CDN hoặc Node/npm.
+
+Mở `/` sau khi chạy ứng dụng. Chờ “Đã sẵn sàng offline” trước khi dùng `/offline` khi mất mạng. Dữ liệu trên máy thuộc trình duyệt; đăng nhập để đồng bộ đám mây. Điều khiển và giới hạn kiểm thử đọc [hướng dẫn UI](.agents/docs/25-giao-dien-va-offline.md). Đã kiểm tra chơi/lưu/khôi phục, phòng online và kết quả trên H2 tạm; chi tiết luồng, tối ưu và giới hạn thiết bị/production trong [tài liệu 27](.agents/docs/27-hinh-anh-hieu-nang-va-luong-game.md).
+
+## Build và chạy
 
 ```powershell
 .\gradlew.bat clean build

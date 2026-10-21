@@ -8,7 +8,7 @@ ApiResponse gồm code/messageKey/message/locale/data/errors; SYS_000 khi thành
 
 GET /api/rankings và GET /api/rankings/campaign công khai cho khách. Hạng/tiến độ cá nhân và các API nghiệp vụ khác dùng Bearer. POST `/api/auth/**` có CSRF vì có refresh cookie; logout/logout-all/socket-ticket yêu cầu Bearer **AND** CSRF trong OpenAPI. Session web không thay JWT ở API.
 
-Mọi REST operation `/api/**` và `/auth/token` có tham số header **Accept-Language** trong Swagger, tham chiếu component dùng chung: chọn `vi` hoặc `en`, mặc định `vi`. Không phải chép lại parameter ở từng controller. Header chọn ngôn ngữ cả response thành công, lỗi nghiệp vụ, validation và security; code/messageKey không thay đổi. `en-US` dùng tiếng Anh; ngôn ngữ không hỗ trợ quay về tiếng Việt, hoặc chọn ngôn ngữ hỗ trợ tiếp theo trong danh sách q-value.
+Mọi REST operation `/api/**` và `/auth/**` có tham số header **Accept-Language** trong Swagger, tham chiếu component dùng chung: chọn `vi` hoặc `en`, mặc định `vi`. Không phải chép lại parameter ở từng controller. Header chọn ngôn ngữ cả response thành công, lỗi nghiệp vụ, validation và security; code/messageKey không thay đổi. `en-US` dùng tiếng Anh; ngôn ngữ không hỗ trợ quay về tiếng Việt, hoặc chọn ngôn ngữ hỗ trợ tiếp theo trong danh sách q-value.
 
 ## Endpoint đang có
 
@@ -24,6 +24,7 @@ Mọi REST operation `/api/**` và `/auth/token` có tham số header **Accept-L
 | POST /api/auth/logout                       | Void                                     | Bearer+CSRF, revoke sid                                   |
 | POST /api/auth/logout-all                   | Void                                     | Bearer+CSRF, revoke mọi sid                               |
 | POST /api/auth/socket-ticket                | SocketTicketResponse                     | Bearer+CSRF, dùng một lần/30s                             |
+| GET /auth/session                         | WebSessionResponse                       | Công khai, CSRF phiên web, no-store                       |
 | POST /auth/token                            | AuthTokenResponse                        | Session web+CSRF của session                              |
 | PUT /api/profile                            | UpdateProfileRequest → UserResponse      | Đổi tên của chính mình                                    |
 | GET /api/rooms                              | List RoomResponse                        | Tối đa 40 phòng, member theo lô                           |
@@ -75,3 +76,6 @@ type subscribe phát lobby hiện tại; type sync cần matchId; input chỉ nh
 CSRF → register/login → Authorize Bearer → create/join → ticket/socket → ready/start → input/sync → results/history/ranking. Recovery: mở lại socket, GET state/lobby, mọi người sống POST resume-ready. Offline sync: PUT revision 0, lần sau dùng revision trả về; conflict cần tải lại và lựa chọn ở UI.
 
 BusinessFlowTest kiểm tra header trên toàn bộ REST operation trong spec, security AND cho vé, sáu trường hợp locale và lỗi WebSocket tiếng Việt/Anh qua kết nối thật. AuthSystemTest kiểm tra spec auth. Chưa thao tác Swagger UI bằng browser; Google thật cần OAuth Client riêng.
+
+
+Vỏ trang Thymeleaf công khai không chứa danh tính hoặc CSRF. UI gọi GET /auth/session rồi POST /login và /auth/token; session web không thay Bearer ở API riêng. Luồng UI/cache/lưu đọc [tài liệu 25](25-giao-dien-va-offline.md).

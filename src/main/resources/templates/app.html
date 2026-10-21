@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#111411">
+  <meta name="description"
+    content="UTC Tank Battle — Điều khiển xe tăng, phối hợp đồng đội và chinh phục chiến trường. Chơi online hoặc solo offline ngay trên trình duyệt.">
+  <title>UTC Tank Battle · Sẵn sàng xuất trận</title>
+  <link rel="icon" type="image/svg+xml" href="/icons/tank.svg">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preload" href="/fonts/be-vietnam-pro-regular.ttf" as="font" type="font/ttf"
+    crossorigin>
+  <!-- Áp dụng nền trước CSS; không nhúng dữ liệu tài khoản vào trang được cache. -->
+  <script src="/js/theme.js"></script>
+  <link rel="stylesheet" href="/css/app.css">
+  <script type="module" src="/js/app.js"></script>
+</head>
+
+<body>
+  <!-- Vỏ công khai: router dựng từng vùng, dữ liệu cá nhân chỉ lấy qua API no-store. -->
+  <a class="skip-link" href="#main">Đi đến nội dung</a>
+  <div id="app" class="app-shell">
+    <aside id="sidebar" class="sidebar" aria-label="Điều hướng chính"></aside>
+    <button id="menu-backdrop" class="menu-backdrop" data-action="close-menu" aria-label="Đóng menu"
+      hidden></button>
+    <div class="workspace">
+      <header id="topbar" class="topbar"></header>
+      <!-- Router thay nội dung main và thu hồi listener của màn hình cũ. -->
+      <main id="main" tabindex="-1">
+        <div class="initial-loading"><span class="loader"></span>Đang mở trạm chỉ huy…</div>
+      </main>
+      <footer class="footer">
+        <span>UTC TANK BATTLE <b>© 2026</b></span>
+        <span>Ít lời. Nhiều chiến thuật.</span>
+        <a href="/help" data-link>Hướng dẫn điều khiển ↗</a>
+      </footer>
+    </div>
+  </div>
+  <div id="toasts" class="toasts" aria-live="polite" aria-atomic="false"></div>
+  <!-- Một dialog chung cho xác nhận và chi tiết; dùng focus trap native. -->
+  <dialog id="modal" class="modal">
+    <div id="modal-content"></div>
+  </dialog>
+  <noscript>
+    <div class="noscript">Bật JavaScript để điều khiển xe tăng và sử dụng giao diện trò chơi.
+    </div>
+  </noscript>
+</body>
+
+</html>

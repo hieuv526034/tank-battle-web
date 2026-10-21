@@ -26,6 +26,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -428,6 +429,112 @@ class AuthSystemTest {
         assertThat(security.size()).isEqualTo(1);
         assertThat(security.get(0).has("bearerAuth")).isTrue();
         assertThat(security.get(0).has("csrfHeader")).isTrue();
+    }
+
+    /** Vỏ UI công khai không làm session web thay thế Bearer của API nghiệp vụ. */
+    @Test
+    void uiShellIsPublicButBusinessApisRemainPrivate() throws Exception {
+        for (String path :
+                List.of(
+                        "/",
+                        "/login",
+                        "/register",
+                        "/rooms",
+                        "/rooms/ABCD2345",
+                        "/play/9fbfc3de-2a33-4c30-8a54-953093c63137",
+                        "/leaderboard",
+                        "/offline",
+                        "/history",
+                        "/saves",
+                        "/profile",
+                        "/help")) {
+            MvcResult page =
+                    mvc.perform(get(path))
+                            .andExpect(status().isOk())
+                            .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_HTML))
+                            .andReturn();
+            String html = page.getResponse().getContentAsString();
+            assertThat(html).contains("/js/app.js", "/js/theme.js", "lang=\"vi\"");
+            assertThat(html).doesNotContain("accessToken", "csrfToken", "BOOTSTRAP_ADMIN_PASSWORD");
+        }
+        for (String path :
+                List.of(
+                        "/css/app.css",
+                        "/js/app.js",
+                        "/js/theme.js",
+                        "/js/offline-engine.js",
+                        "/js/game-renderer.js",
+                        "/js/game-art.js",
+                        "/icons/tank.svg",
+                        "/icons/mode-online.svg",
+                        "/icons/mode-campaign.svg",
+                        "/icons/lucide.svg",
+                        "/fonts/be-vietnam-pro-regular.ttf",
+                        "/sw.js",
+                        "/manifest.webmanifest")) {
+            mvc.perform(get(path)).andExpect(status().isOk());
+        }
+        mvc.perform(get("/api/rooms")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/profile")).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/offline-saves")).andExpect(status().isUnauthorized());
+        String worker = mvc.perform(get("/sw.js")).andReturn().getResponse().getContentAsString();
+        assertThat(worker).contains("utc-tank-ui-").doesNotContain("@UI_REVISION@");
+    }
+
+    /** Browser lấy CSRF thật, đăng nhập form rồi đổi session thành JWT cho API. */
+    @Test
+    void browserFormLoginCanExchangeSessionWithoutCachingCsrfOrBypassingApiAuth() throws Exception {
+        String username = "web_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
+        accounts.create(username, "Chỉ huy trình duyệt", passwords.encode(PASSWORD));
+        MvcResult anonymous =
+                mvc.perform(get("/auth/session"))
+                        .andExpect(status().isOk())
+                        .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "no-store"))
+                        .andExpect(jsonPath("$.data.authenticated").value(false))
+                        .andReturn();
+        MockHttpSession webSession = (MockHttpSession) anonymous.getRequest().getSession(false);
+        assertThat(webSession).isNotNull();
+        String csrfHeader = body(anonymous).at("/data/csrfHeaderName").asText();
+        String csrfToken = body(anonymous).at("/data/csrfToken").asText();
+        assertThat(csrfToken).isNotBlank();
+        mvc.perform(
+                        post("/login")
+                                .session(webSession)
+                                .param("username", username)
+                                .param("password", PASSWORD))
+                .andExpect(status().isForbidden());
+        MvcResult login =
+                mvc.perform(
+                                post("/login")
+                                        .session(webSession)
+                                        .header(csrfHeader, csrfToken)
+                                        .param("username", username)
+                                        .param("password", PASSWORD))
+                        .andExpect(status().is3xxRedirection())
+                        .andExpect(redirectedUrl("/rooms"))
+                        .andReturn();
+        MockHttpSession authenticated = (MockHttpSession) login.getRequest().getSession(false);
+        MvcResult current =
+                mvc.perform(get("/auth/session").session(authenticated))
+                        .andExpect(status().isOk())
+                        .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "no-store"))
+                        .andExpect(jsonPath("$.data.authenticated").value(true))
+                        .andReturn();
+        MvcResult exchange =
+                mvc.perform(
+                                post("/auth/token")
+                                        .session(authenticated)
+                                        .header(
+                                                body(current).at("/data/csrfHeaderName").asText(),
+                                                body(current).at("/data/csrfToken").asText()))
+                        .andExpect(status().isOk())
+                        .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "no-store"))
+                        .andReturn();
+        String access = body(exchange).at("/data/accessToken").asText();
+        mvc.perform(get("/api/auth/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + access))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.username").value(username));
+        mvc.perform(get("/api/rooms").session(authenticated)).andExpect(status().isUnauthorized());
     }
 
     private AuthenticatedApiClient registerAndLogin() throws Exception {

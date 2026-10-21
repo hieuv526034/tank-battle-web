@@ -1,6 +1,6 @@
 # Luồng backend và nghiệm thu trước UI
 
-Đọc cùng [API](11-swagger-va-api.md), [STATUS](STATUS.md) và [Neon production](19-neon-production.md). UI/Canvas/IndexedDB/Service Worker sẽ làm ở giai đoạn sau theo yêu cầu người dùng.
+Đọc cùng [API](11-swagger-va-api.md), [STATUS](STATUS.md) và [Neon production](19-neon-production.md). Giao diện/Canvas/engine JS/IndexedDB/Service Worker đã có trong [tài liệu 25](25-giao-dien-va-offline.md); chưa nghiệm thu gameplay browser xuyên suốt.
 
 ## 1. Cách đọc source
 
@@ -75,7 +75,7 @@ Campaign: người còn sống, không bỏ cuộc ở CAMPAIGN_CLEARED nhận W
 
 ## 7. Bản lưu offline cá nhân
 
-Backend chỉ nhận đồng bộ khi có mạng. Browser mất Internet phải dùng IndexedDB/Service Worker ở UI tương lai; API không thay thế lưu offline tại máy.
+Backend chỉ nhận đồng bộ khi có mạng. Browser mất Internet dùng engine JS/IndexedDB/Service Worker ở UI hiện tại; API không thay thế lưu offline tại máy.
 
 Ba slot/user. PUT expectedRevision=0 tạo mới; cập nhật gửi revision đã đọc. Khóa user bảo vệ insert đầu và UPDATE có điều kiện revision; conflict trả SAVE_002 để UI cho người dùng chọn bản giữ. Xóa hủy payload nhưng giữ metadata revision (V5); tạo lại slot vẫn nhận revision lớn hơn trước để thiết bị cũ không thể ghi đè. GET list chỉ metadata, GET slot mới đọc payload; DELETE cũng có revision. Không nhận userId.
 

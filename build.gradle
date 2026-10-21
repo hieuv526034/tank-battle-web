@@ -108,6 +108,21 @@ tasks.named('check') {
 tasks.named('bootJar') {
     archiveFileName = 'tank-battle-web-1.0.0.jar'
 }
+
+// Đổi cache Service Worker theo nội dung asset/template, tránh giữ UI cũ sau deploy.
+tasks.named('processResources') {
+    java.security.MessageDigest uiDigest = java.security.MessageDigest.getInstance('SHA-256')
+    fileTree('src/main/resources') {
+        include 'static/**', 'templates/**'
+    }.files.sort { File left, File right -> left.path <=> right.path }.each { File asset ->
+        uiDigest.update(asset.bytes)
+    }
+    String uiRevision = uiDigest.digest().encodeHex().toString().substring(0, 16)
+    inputs.property('uiRevision', uiRevision)
+    filesMatching('static/sw.js') {
+        filter { String line -> line.replace('@UI_REVISION@', uiRevision) }
+    }
+}
 tasks.named('jar') {
     enabled = false
 }

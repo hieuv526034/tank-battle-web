@@ -24,7 +24,7 @@ Catalog lỗi, i18n, envelope và validator thuộc common để nghiệp vụ p
 | Trang Thymeleaf / Google | HttpSession và JSESSIONID       | Bộ nhớ server hiện tại          | Token session, form hoặc X-CSRF-TOKEN                        |
 | /api/\*\*                | Bearer access JWT               | Chữ ký + auth_sessions trong DB | /api/auth/\*\* POST vẫn cần X-XSRF-TOKEN và cookie tương ứng |
 | Refresh                  | Cookie TANK_REFRESH HttpOnly    | Chỉ hash refresh ở DB           | Bắt buộc                                                     |
-| WebSocket                | Thiết kế dùng session handshake | SocketHub/runtime               | Handler/Origin/membership chưa hoàn thiện                    |
+| WebSocket                | Opaque ticket từ JWT hoặc session web | SocketHub/runtime          | Origin/membership/sequence và thu hồi đã triển khai, xem tài liệu 20 |
 
 JWT không được tự suy thành phiên web. Session web không tự xác thực /api/\*\*. Sau form/Google login, POST /auth/token có CSRF session để nhận JWT nếu cần.
 
@@ -60,7 +60,7 @@ Production cần cặp RSA PEM ổn định: private PKCS#8 và public X.509, tr
 
 Refresh dùng @Transactional(noRollbackFor = AuthFailure.class) để revoke khi replay vẫn commit dù trả lỗi. Đây là quy tắc có chủ đích; lỗi DB/encoder ngoài dự kiến vẫn rollback. Cần integration test PostgreSQL để chứng minh commit và tranh chấp thực tế.
 
-Chính sách nghiêm ngặt: hai request dùng cùng refresh có thể làm cả family bị thu hồi. Frontend cần phối hợp một lần refresh giữa các request/tab; chưa có frontend thực hiện việc này.
+Chính sách nghiêm ngặt: hai request dùng cùng refresh có thể làm cả family bị thu hồi. Frontend phối hợp refresh bằng Web Locks/BroadcastChannel trong api.js; trình duyệt thiếu Web Locks dùng session exchange. Luồng nhiều tab thật còn cần kiểm chứng, xem tài liệu 25.
 
 ## 6. Google
 

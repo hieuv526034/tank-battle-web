@@ -54,14 +54,14 @@ import vn.edu.utc.tankbattle.common.constant.AppConstants;
         type = SecuritySchemeType.APIKEY,
         in = SecuritySchemeIn.HEADER,
         paramName = "X-CSRF-TOKEN",
-        description = "CSRF của session Thymeleaf từ meta/form, dùng riêng cho /auth/token.")
+        description = "CSRF của session từ GET /auth/session, dùng cho form web và /auth/token.")
 public class OpenApiConfig {
     private static final String LANGUAGE_PARAMETER = "acceptLanguage";
     private static final String LANGUAGE_REFERENCE =
             "#/components/parameters/" + LANGUAGE_PARAMETER;
 
     /**
-     * Bổ sung tham số Accept-Language dùng chung vào mọi operation /api/** và /auth/token trong
+     * Bổ sung tham số Accept-Language dùng chung vào mọi operation /api/** và /auth/** trong
      * Swagger. Tham số tham chiếu một component duy nhất, có lựa chọn vi/en và mặc định vi; kiểm
      * tra trước khi thêm để tránh khai báo trùng. Customizer chỉ mô tả hợp đồng API; LocaleConfig
      * chịu trách nhiệm đọc header khi request thực sự chạy.
@@ -86,7 +86,7 @@ public class OpenApiConfig {
             openApi.getPaths()
                     .forEach(
                             (path, item) -> {
-                                if (path.startsWith("/api/") || "/auth/token".equals(path)) {
+                                if (path.startsWith("/api/") || path.startsWith("/auth/")) {
                                     for (Operation operation : item.readOperations()) {
                                         boolean declared =
                                                 operation.getParameters() != null
