@@ -1,6 +1,6 @@
 # 22. Đưa source lên GitHub và deploy Render Free với Neon
 
-Dành cho repo [hieuv526034/tank-battle-web](https://github.com/hieuv526034/tank-battle-web). Người dùng tự push source và thao tác Dashboard. Đây là backend demo; UI/Canvas chưa làm. Render chạy Java, Neon giữ dữ liệu PostgreSQL production.
+Dành cho repo [hieuv526034/tank-battle-web](https://github.com/hieuv526034/tank-battle-web). Người dùng tự push source và thao tác Dashboard. Source đã có backend Spring, UI Thymeleaf/Canvas và solo offline; xem [29](29-sua-loi-va-bo-cuc-ban-choi.md) về nghiệm thu và giới hạn. Render chạy Java, Neon giữ dữ liệu PostgreSQL production.
 
 ## 1. Các file đã chuẩn bị
 
@@ -185,7 +185,7 @@ Env và Secret Files vẫn nằm trên Render; CI chỉ dùng DB/key test. Khôn
 ## 9. Kiểm tra sau deploy và xử lý lỗi
 
 - Mở https://tank-battle-web.onrender.com/actuator/health/readiness, cần HTTP 200 và status UP.
-- API_DOCS_ENABLED=true: mở /swagger-ui.html. Trang gốc hiện có thể 404 vì UI chưa triển khai.
+- API_DOCS_ENABLED=true: mở /swagger-ui.html. Trang gốc phải mở vỏ game Thymeleaf; nếu 404, kiểm commit/image đang chạy và log routing.
 - GET /api/auth/me chưa có JWT phải trả 401/AUTH_001; Accept-Language: en trả message tiếng Anh.
 - Thử CSRF → register/login → Bearer → tạo phòng. Chỉ tạo tài khoản demo do nhóm chủ động cần dùng.
 - WebSocket public dùng wss://tank-battle-web.onrender.com/ws/game?ticket=..., cùng origin HTTPS. Không chuyển về ws:// ở public.
@@ -201,7 +201,7 @@ Env và Secret Files vẫn nằm trên Render; CI chỉ dùng DB/key test. Khôn
 | Flyway lỗi/checksum                          | Kiểm direct URL, cùng DB/schema, migration mới; không repair/clean/drop tùy tiện                |
 | BOOTSTRAP_ADMIN_PASSWORD cần 12–64 ký tự       | Thêm/cập nhật đúng biến trong Environment của Render, dùng giá trị hợp lệ ở render.env rồi Save/redeploy |
 | No open ports/health fail                    | PORT=10000, Docker Command trống, profile prod, xem log startup                                 |
-| Trả 404 ở /                                  | UI chưa có; kiểm readiness và Swagger thay vì suy ra backend chết                               |
+| Trả 404 ở /                                  | Source đã có trang chủ; kiểm commit/image mới, routing và log, đồng thời kiểm readiness          |
 
 Log có Flyway version 6 và Hibernate validate thành công nhưng `relation "rooms" does not exist` hoặc `relation "app_locks" does not exist`: kiểm schema JDBC trước. Source đặt `spring.datasource.hikari.schema=tank_battle` cho mọi connection, cùng schema Flyway/JPA. Push/redeploy đúng commit đã sửa; import lại render.env nếu Dashboard còn cấu hình cũ. Nếu Dashboard có `SPRING_DATASOURCE_HIKARI_SCHEMA` ghi đè thì đặt `tank_battle`. Giữ direct endpoint và hai RSA Secret Files. Không dùng repair/clean/drop/baseline để chữa sai search_path.
 

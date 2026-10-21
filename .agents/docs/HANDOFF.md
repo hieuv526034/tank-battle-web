@@ -2,6 +2,46 @@
 
 Cập nhật 21/10/2026. Đọc [quy ước](../AGENTS.md), [STATUS](STATUS.md), [luồng backend](20-luong-backend-va-test.md) và [bootstrap admin](24-bootstrap-admin-va-phan-quyen.md).
 
+## Tiếp tục sau rà soát trước commit 21/10/2026
+
+- Người dùng hỏi còn vấn đề gì; đã rà source/CI/report, không chạy lại test hoặc full app. Báo cáo hiện có vẫn 86 test Java + 39 PostgreSQL đạt từ lượt trước. Đã sửa thông tin UI/browser cũ trong tài liệu 20/22 và mục giới hạn STATUS. Không có sửa logic/env/key/DB trong lượt này.
+- Ưu tiên nghiệm thu 2–4 người/reconnect rồi kill/restart JVM thật và kiểm matchId/deadline/kết quả/ranking không nhân đôi. Test tạo coordinator mới chưa chứng minh crash đúng lúc commit. Tiếp theo CI/Docker/Render của commit mới, Google callback thật, nhiều thiết bị/mobile, Java-JS parity và tải/backup-restore.
+- Giới hạn cần nói rõ: một instance, chưa ownership/fencing; không deploy khi đang có trận. Catalog chỉ cấu hình JSON/restart, chưa CRUD admin; harness JS tạm 41 assertion chưa vào CI. Không coi thiếu nghiệm thu là lỗi đã được tái hiện, cũng không tuyên bố không còn lỗi.
+- Git vẫn d725c22 với working tree thay đổi chưa commit và .run/game-outcome.js untracked. Nếu người dùng tự commit, cần stage cả file mới; nội dung commit đã được cung cấp ở chat. Không tự commit/push/deploy từ yêu cầu hỏi tình trạng.
+
+## Tiếp tục sau lỗi Flyway local prod lặp lại 21/10/2026
+
+- Đọc [30](30-chay-local-va-nap-env.md). Đã thêm cấu hình IntelliJ dùng chung .run/TankBattleApplication-prod-local.run.xml, tên TankBattleApplication (prod local), prod và working directory $PROJECT_DIR$. Cấu hình cũ trong .idea/workspace.xml cũng được sửa nhưng bị ignore/IDE có thể giữ RAM; hướng dẫn người dùng chọn cấu hình chia sẻ mới. Không tự đổi application-prod.yml sang H2 hoặc nhét URL/password vào YAML.
+- JVM ConfigData không auto-config/DB đã chứng minh root + prod tường minh/mặc định đọc .env được; cwd build/classes/java/main gây thiếu biến. Chưa thu được cwd của chính lần Run IDE bị lỗi, nên không khẳng định chắc chắn nguyên nhân duy nhất. Không chạy full app với env Neon để chứng minh.
+- Unit test import dùng prod tường minh; full build/Spotless 86 test đạt. tools/test-production-startup.ps1 nay dùng .env mặc định trong runRoot tạm, xóa APP_ENV_FILE cùng DB/JWT khỏi env con. PostgreSQL riêng 39 test và JAR prod/Flyway V1–V6/health/auth/admin/rooms đều đạt; fixture/JVM/cluster đã dọn. Không quay về chỉ kiểm APP_ENV_FILE rồi kết luận default path đã được kiểm.
+- Giữ các thay đổi UI/auth/env từ lượt trước. Không đổi DB/PEM/mật khẩu, không commit/push/deploy hoặc tắt app người dùng trong lượt sửa này.
+
+## Tiếp tục sau sửa chạy local 21/10/2026
+
+- Đọc [30](30-chay-local-va-nap-env.md). Prod tự import .env hoặc APP_ENV_FILE qua ConfigData; đây vẫn là prod/PostgreSQL, không thêm H2/local runtime. IDE Working directory phải là root/JDK 21; biến Run Configuration thật thắng file.
+- .env đã thêm issuer localhost, hai JWT resource file:./secrets/... và hai cờ cookie HTTP false; giữ DB/password/key hiện có. Không đổi render.env/Docker/HTTPS mặc định; không sinh lại RSA. Không quay lại mô tả “Spring không tự đọc .env” cho source hiện tại.
+- JUnit dùng fixture và test profile không import .env. ProductionProfileTest base trỏ file không tồn tại để không đọc env thật. tools/test-production-startup.ps1 dùng APP_ENV_FILE/startup.env tạm, bỏ DB/JWT khỏi env của JAR con và dọn trong finally; không dùng Neon.
+- Full 86 test Java/build/Spotless, 39 test PostgreSQL và JAR smoke tự import startup.env đạt. Xóa entry env trong PowerShell bằng Remove-Item Env:, không SetEnvironmentVariable($null) vì có thể thành chuỗi rỗng thắng file. Fixture/JVM/cluster đã dọn; JAR không nhúng env/key. Không tự bootRun với .env thật để kiểm vì sẽ chạy Flyway trên production. Chưa commit/push/deploy.
+
+## Tiếp tục sau sửa lỗi và bố cục bàn chơi 21/10/2026
+
+- Đọc [29](29-sua-loi-va-bo-cuc-ban-choi.md). Ba lỗi review đã sửa: context owner/identity/route từ trước khóa slot và guard trong API/IndexedDB; soloOutcome dùng chung; navigation chỉ vỏ UI fallback mạng/5xx trong đúng cache worker.
+- Giữ header ngoài content-scroll, body không cuộn; desktop rail 80px và sở thích localStorage; mobile drawer inert/focus/Tab/Escape. Bàn chơi là native dialog top layer, ResizeObserver tính bản đồ 4:3 theo cả hai chiều, không đo trong tick. Không dùng selector dialog[open] chung để chặn game vì chính bàn chơi cũng là dialog; chỉ #modal[open] chặn input.
+- Hồ sơ sau tạo chỉ xem; không thêm lại form/updateProfile/rename. GET /api/profile chính chủ; PUT cũ luôn USER_007/403 vi/en cho USER và ADMIN. Không reset thông tin tài khoản, không đổi migration V1–V6/env/key.
+- Sửa thêm CSRF session strategy riêng API stateless: Bearer GET không được xóa cookie CSRF mỗi request; web chain giữ strategy riêng, CsrfFilter vẫn kiểm POST auth. Test cookie jar/HTTP thật và browser phòng/socket/Campaign online đạt; không tắt CSRF để né lỗi.
+- Kiểm chứng: full 83 test Java/build/Spotless, 39 PostgreSQL và prod-profile JAR startup smoke đạt; harness JS tạm 41 assertion, syntax JS/sw đạt. Browser dùng H2 riêng; xem STATUS cho lượt cuối/ảnh/giới hạn thiết bị. Harness/formatter/classpath preview dưới build bị ignore, không là dependency ứng dụng/CI.
+- Còn nhiều thiết bị/reconnect/restart cứng/Google/điện thoại thật/tải. Không dùng quyền commit/push/tắt máy ở mục lịch sử cho lượt này. Không truy cập Neon để test.
+- Bản cuối: preview H2 18081 đã dừng, tab đã đóng/viewport reset. Ảnh nằm trong build/verification; menu mobile focus/inert và solo save/restore/online kết quả đạt. Không coi bản Render hiện tại đã có các thay đổi này khi chưa push/redeploy.
+
+## Tiếp tục sau rà soát chất lượng web 21/10/2026
+
+Mục dưới giữ lịch sử review trước sửa. Source mới và kết quả hiện tại đọc mục trước và STATUS.
+
+- Đọc [28](28-ra-soat-chat-luong-21-10-2026.md). Đã tái hiện ba lỗi JS nhưng chưa sửa: downloadSave chụp scope sau await nên có thể ghi nhầm tài khoản; solo MUTUAL_ELIMINATION bị LOSS thay DRAW; SW navigation không fallback cached shell khi fetch trả 5xx.
+- Ưu tiên chụp owner/generation và kiểm lại danh tính quanh cloud sync; thống nhất outcome giữa UI/storage; xử lý 5xx cho navigation công khai mà không cache API/auth. Harness RAM ở build/verification/review-cases.mjs không phải test suite frontend đã tích hợp.
+- Kết quả lượt này: 81 Java/build/Spotless, 37 PostgreSQL, prod-profile JAR smoke đạt. Public Render home/readiness UP/bảng hạng công khai đạt qua browser; không ghi dữ liệu production. Chưa nghiệm thu nhiều người/recovery restart/cloud conflict/Google/điện thoại thật hoặc Docker/CI.
+- Chỉ cập nhật tài liệu đánh giá, không đổi logic/env/key/migration, không commit/push. Không áp dụng lại yêu cầu tắt máy/commit của lượt hình ảnh trước cho lượt review này.
+
 ## Tiếp tục sau lượt hình ảnh/hiệu năng và nghiệm thu 21/10/2026
 
 - Đọc [27](27-hinh-anh-hieu-nang-va-luong-game.md). Cache địa hình/sprite và snapshot hiển thị không được ghi ngược state; nội suy chỉ phục vụ hình ảnh. HUD dùng WeakMap theo element, không đưa lại innerHTML không đổi vào mỗi tick.

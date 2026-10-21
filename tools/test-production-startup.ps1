@@ -1,4 +1,4 @@
-# Smoke test prod profile với PostgreSQL portable TEST đang chạy. Không đọc .env/Neon.
+# Smoke test prod profile với PostgreSQL portable TEST. Chỉ đọc file env fixture, không .env gốc/Neon.
 # tools/test-postgres.ps1 -ProductionSmoke gọi script này sau khi integration test đạt.
 param([string]$JarPath = (Join-Path $PSScriptRoot '../build/libs/tank-battle-web-1.0.0.jar'))
 $ErrorActionPreference = 'Stop'
@@ -29,7 +29,7 @@ if (-not (Test-Path -LiteralPath $jar)) { throw 'Cần chạy gradlew.bat build 
 $runRoot = [IO.Path]::GetFullPath((Join-Path $workspace ('build/production-smoke-' + [Guid]::NewGuid().ToString('N'))))
 $reportRoot = Join-Path $workspace 'build/verification'
 New-Item -ItemType Directory -Path $reportRoot -Force | Out-Null
-$variables = @('SPRING_PROFILES_ACTIVE', 'SPRING_DATASOURCE_URL', 'SPRING_DATASOURCE_USERNAME',
+$variables = @('APP_ENV_FILE', 'SPRING_PROFILES_ACTIVE', 'SPRING_DATASOURCE_URL', 'SPRING_DATASOURCE_USERNAME',
     'SPRING_DATASOURCE_PASSWORD', 'SPRING_FLYWAY_URL', 'AUTH_ISSUER', 'JWT_PRIVATE_KEY',
     'JWT_PUBLIC_KEY', 'API_DOCS_ENABLED', 'PORT', 'BOOTSTRAP_ADMIN_PASSWORD', 'BOOTSTRAP_ADMIN_ENABLED', 'BOOTSTRAP_ADMIN_USERNAME')
 $previous = @{}
@@ -59,8 +59,25 @@ try {
     $env:BOOTSTRAP_ADMIN_ENABLED = 'true'
     $env:BOOTSTRAP_ADMIN_USERNAME = 'admin'
     $env:PORT = [string]$httpPort
+    # Kiểm luồng giống Run trong IDE: prod đọc .env tại working directory mặc định.
+    # Không truyền APP_ENV_FILE/DB/JWT: tránh bỏ sót lỗi tìm file mà test đường dẫn tường minh che mất.
+    # File nằm trong runRoot riêng và luôn được dọn; không đọc hoặc sao chép .env production.
+    $fixtureEnvironment = @{}
+    $fixtureLines = @()
+    foreach ($name in $variables | Where-Object { $_ -ne 'APP_ENV_FILE' }) {
+        $value = [Environment]::GetEnvironmentVariable($name, 'Process')
+        $fixtureEnvironment[$name] = $value
+        $fixtureLines += $name + '=' + $value
+    }
+    $fixtureFile = Join-Path $runRoot '.env'
+    [IO.File]::WriteAllLines($fixtureFile, [string[]]$fixtureLines, [Text.UTF8Encoding]::new($false))
+    foreach ($name in $variables | Where-Object { $_ -ne 'SPRING_PROFILES_ACTIVE' }) {
+        # Xóa hẳn entry; một số tổ hợp PowerShell/.NET giữ $null thành chuỗi rỗng,
+        # khiến env rỗng có ưu tiên cao hơn giá trị đúng trong file fixture.
+        Remove-Item -LiteralPath ('Env:' + $name) -ErrorAction SilentlyContinue
+    }
     $app = Start-Process -FilePath $javaExecutable -WindowStyle Hidden -PassThru `
-        -ArgumentList @('-jar', ('"' + $jar + '"')) -WorkingDirectory $workspace `
+        -ArgumentList @('-jar', ('"' + $jar + '"')) -WorkingDirectory $runRoot `
         -RedirectStandardOutput (Join-Path $reportRoot 'production-startup.log') `
         -RedirectStandardError (Join-Path $reportRoot 'production-startup-error.log')
 
@@ -82,8 +99,8 @@ try {
     # Health/JPA có thể đạt dù JDBC tìm sai schema. Đăng nhập và gọi API thật để kiểm cả hai.
     $csrf = Invoke-RestMethod "http://127.0.0.1:$httpPort/api/auth/csrf" -SessionVariable smokeSession
     $loginPayload = @{
-        username = $env:BOOTSTRAP_ADMIN_USERNAME
-        password = $env:BOOTSTRAP_ADMIN_PASSWORD
+        username = $fixtureEnvironment['BOOTSTRAP_ADMIN_USERNAME']
+        password = $fixtureEnvironment['BOOTSTRAP_ADMIN_PASSWORD']
     } | ConvertTo-Json -Compress
     $login = Invoke-RestMethod "http://127.0.0.1:$httpPort/api/auth/login" -Method Post `
         -WebSession $smokeSession -ContentType 'application/json' -Body $loginPayload `
@@ -96,16 +113,22 @@ try {
     }
     $rooms = Invoke-RestMethod "http://127.0.0.1:$httpPort/api/rooms" -Headers $authorization
     if ($null -eq $rooms.data -or @($rooms.data).Count -ne 0) { throw 'DB smoke mới phải có danh sách phòng trống.' }
-    & java --class-path $driver $databaseTool verify $env:SPRING_DATASOURCE_URL
+    & java --class-path $driver $databaseTool verify $fixtureEnvironment['SPRING_DATASOURCE_URL']
     if ($LASTEXITCODE -ne 0) { throw 'Thiếu migration trong DB smoke.' }
-    Write-Output 'PRODUCTION_PROFILE_STARTUP_OK: health UP, auth 401/en, admin login/API, rooms API, Flyway V1-V6.'
+    Write-Output 'PRODUCTION_PROFILE_STARTUP_OK: default .env from working directory (no APP_ENV_FILE), health UP, auth 401/en, admin login/API, rooms API, Flyway V1-V6.'
 } finally {
     if ($null -ne $app -and -not $app.HasExited) {
         # Chỉ dừng Java do smoke test này tạo; không dừng app/IDE của người phát triển.
         Stop-Process -Id $app.Id
         $app.WaitForExit(10000) | Out-Null
     }
-    foreach ($name in $variables) { [Environment]::SetEnvironmentVariable($name, $previous[$name], 'Process') }
+    foreach ($name in $variables) {
+        if ($null -eq $previous[$name]) {
+            Remove-Item -LiteralPath ('Env:' + $name) -ErrorAction SilentlyContinue
+        } else {
+            [Environment]::SetEnvironmentVariable($name, $previous[$name], 'Process')
+        }
+    }
     $allowedPrefix = [IO.Path]::GetFullPath((Join-Path $workspace 'build')) + [IO.Path]::DirectorySeparatorChar
     if (-not $runRoot.StartsWith($allowedPrefix, [StringComparison]::OrdinalIgnoreCase) -or
         [IO.Path]::GetFileName($runRoot) -notmatch '^production-smoke-[a-f0-9]{32}$') { throw 'Từ chối dọn đường dẫn ngoài smoke test.' }

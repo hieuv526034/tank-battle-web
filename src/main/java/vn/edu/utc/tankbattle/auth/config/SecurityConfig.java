@@ -23,6 +23,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import vn.edu.utc.tankbattle.auth.entity.UserEntity;
@@ -138,6 +139,11 @@ public class SecurityConfig {
                 .csrf(
                         config ->
                                 config.csrfTokenRepository(csrf)
+                                        // API JWT không tạo phiên web: nhận Bearer ở mỗi request
+                                        // không được coi là login mới rồi xóa cookie CSRF.
+                                        // CsrfFilter/matcher vẫn kiểm POST auth như bên dưới.
+                                        .sessionAuthenticationStrategy(
+                                                new NullAuthenticatedSessionStrategy())
                                         .csrfTokenRequestHandler(
                                                 new CsrfTokenRequestAttributeHandler())
                                         .withObjectPostProcessor(apiCsrf))

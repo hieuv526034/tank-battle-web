@@ -14,6 +14,9 @@ let refreshFlight = null;
 let session = null;
 let refreshTimer;
 export let user = null;
+// Tăng khi đổi/đóng phiên, kể cả A → B → A. Refresh cùng tài khoản không tăng.
+let identityVersion = 0;
+let tokenUserId = null;
 const events = new EventTarget();
 const channel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('utc-tank-auth') :
   null;
@@ -114,18 +117,31 @@ async function authPost(path, body, bearer = false) {
 
 /** Nhận JWT vào RAM và lên lịch refresh trước hạn; phát sự kiện cho socket cập nhật vé. */
 function accept(grant) {
+  const nextId = String(grant.userId);
+  const changedUser = user && String(user.id) !== nextId;
+  if (tokenUserId !== nextId) {
+    identityVersion++;
+    if (user && String(user.id) !== nextId) user = null;
+  }
+  tokenUserId = nextId;
   token = grant.accessToken;
   expiresAt = Date.now() + grant.expiresIn * 1000;
   hint(true);
   clearTimeout(refreshTimer);
   refreshTimer = setTimeout(() => refresh().catch(() => {}), Math.max(1000, grant.expiresIn * 1000 -
     35000));
+  if (changedUser) {
+    // Kể cả khi BroadcastChannel bị bỏ lỡ, không giữ màn hình/socket của chủ JWT cũ.
+    events.dispatchEvent(new Event('change'));
+  }
   events.dispatchEvent(new Event('token'));
   return grant;
 }
 
 /** Xóa JWT/hồ sơ/timer khỏi RAM và báo các màn hình chuyển về khách. */
 function forget() {
+  identityVersion++;
+  tokenUserId = null;
   token = null;
   user = null;
   expiresAt = 0;
@@ -166,12 +182,49 @@ export async function refresh() {
   };
   // Trình duyệt thiếu Web Locks dùng session exchange, tránh rotate đồng thời thiếu khóa.
   refreshFlight = (navigator.locks ? navigator.locks.request('utc-tank-refresh', rotate) :
-    exchange()).finally(() => refreshFlight = null);
+    exchange()).then(async grant => {
+    if (!user) {
+      await loadProfile();
+      events.dispatchEvent(new Event('change'));
+    }
+    return grant;
+  }).finally(() => refreshFlight = null);
   return refreshFlight;
 }
 // navigator.onLine chỉ phản ánh kết nối mạng thiết bị, không chứng minh server truy cập được.
 // Cờ này chỉ chọn vùng lưu local, tuyệt đối không cấp quyền gọi API hoặc thay JWT.
 export let authUnavailable = !navigator.onLine;
+
+/** Chụp thế hệ phiên trước thao tác dài; không chứa token hoặc dữ liệu bí mật. */
+export function captureIdentity() {
+  return Object.freeze({
+    version: identityVersion,
+    userId: user ? String(user.id) : null
+  });
+}
+
+/**
+ * Không chuyển request/bản lưu đang chờ sang tài khoản mới, cả khi refresh đổi JWT.
+ * Danh tính null được dùng cho thao tác local của khách, không cấp quyền gọi API.
+ */
+export function assertIdentity(identity) {
+  if (identity.version !== identityVersion || identity.userId !== (user ? String(user.id) : null) ||
+    (identity.userId !== null && identity.userId !== tokenUserId)) {
+    throw new ApiError('Phiên tài khoản đã thay đổi. Vui lòng thực hiện lại ở tài khoản hiện tại.',
+      'CLIENT_IDENTITY_CHANGED');
+  }
+}
+
+/** Bỏ response hồ sơ cũ nếu login/refresh ở tab khác đã đổi chủ token trong lúc đợi. */
+async function loadProfile() {
+  const version = identityVersion;
+  const profile = await api('/api/auth/me');
+  if (version !== identityVersion || String(profile.id) !== tokenUserId) {
+    throw new ApiError('Phiên tài khoản đã thay đổi. Vui lòng tải lại trang.',
+      'CLIENT_IDENTITY_CHANGED');
+  }
+  user = profile;
+}
 
 /** Khôi phục tài khoản; phân biệt server không truy cập được với phiên thật sự hết hạn. */
 export async function initializeAuth() {
@@ -181,9 +234,12 @@ export async function initializeAuth() {
     const web = await webSession();
     if (web.authenticated || hint()) {
       await refresh();
-      user = await api('/api/auth/me');
+      if (!user) await loadProfile();
+    } else if (user || token) {
+      forget();
     }
   } catch (error) {
+    if (error.code === 'CLIENT_IDENTITY_CHANGED') return user;
     authUnavailable = !error.status || error.status >= 500;
     if (error.status === 401) forget();
   }
@@ -193,6 +249,7 @@ export async function initializeAuth() {
 /** Đăng nhập form với CSRF, đổi session lấy JWT rồi đọc hồ sơ; thông báo các tab. */
 export async function login(username, password) {
   const perform = async () => {
+    identityVersion++;
     const web = await webSession();
     const response = await fetchWithTimeout('/login', {
       method: 'POST',
@@ -215,7 +272,7 @@ export async function login(username, password) {
     }
     apiCsrf = null;
     await exchange();
-    user = await api('/api/auth/me');
+    await loadProfile();
     authUnavailable = false;
     events.dispatchEvent(new Event('change'));
     channel?.postMessage('signed-in');
@@ -254,8 +311,14 @@ export async function logout(all = false) {
 }
 /** Chỉ retry auth khi server trả 401; không phát lại mutation do lỗi mạng không rõ commit. */
 export async function api(path, options = {}, retry = true) {
+  const {
+    identity,
+    ...requestOptions
+  } = options;
+  if (identity) assertIdentity(identity);
   const authenticated = options.auth !== false;
   if (authenticated && (!token || expiresAt < Date.now() + 15000)) await refresh();
+  if (identity) assertIdentity(identity);
   const headers = {
     ...options.headers
   };
@@ -265,30 +328,23 @@ export async function api(path, options = {}, retry = true) {
     const security = await csrf();
     headers[security.headerName] = security.token;
   }
+  if (identity) assertIdentity(identity);
   try {
-    return await raw(path, {
-      ...options,
+    const result = await raw(path, {
+      ...requestOptions,
       headers,
       body: options.body === undefined ? undefined : JSON.stringify(options.body)
     });
+    if (identity) assertIdentity(identity);
+    return result;
   } catch (error) {
     if (authenticated && retry && error.status === 401) {
       await refresh();
+      if (identity) assertIdentity(identity);
       return api(path, options, false);
     }
     throw error;
   }
-}
-/** Cập nhật tên hiển thị từ response chuẩn hóa của server và báo UI dựng lại. */
-export async function updateProfile(displayName) {
-  user = await api('/api/profile', {
-    method: 'PUT',
-    body: {
-      displayName
-    }
-  });
-  events.dispatchEvent(new Event('change'));
-  return user;
 }
 /** Đăng ký theo dõi thay đổi danh tính trong vòng đời ứng dụng. */
 export const onAuth = listener => events.addEventListener('change', listener);
@@ -299,6 +355,10 @@ export const onToken = listener => {
 };
 channel?.addEventListener('message', event => {
   if (event.data === 'signed-out') forget();
-  else if (event.data === 'signed-in' && !user) initializeAuth().then(() => events
-    .dispatchEvent(new Event('change')));
+  else if (event.data === 'signed-in') {
+    // Cookie dùng chung đã đổi: vô hiệu thao tác A ngay, rồi nạp đúng B kể cả tab đang có user A.
+    forget();
+    apiCsrf = null;
+    initializeAuth().catch(() => {});
+  }
 });

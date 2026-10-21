@@ -15,6 +15,48 @@ Cập nhật 21/10/2026, Asia/Saigon. Đã triển khai UI; không coi kế ho�
 
 ## Lượt thay đổi hiện tại
 
+### Rà soát phần còn lại trước commit — 21/10/2026
+
+- Kiểm source, workflow backend-ci.yml, controller catalog, runtime/recovery và báo cáo hiện có: 86 test Java/39 test PostgreSQL, 0 failure/error/skipped, sinh lúc 11:06/11:07 ngày 21/10. Đây là đọc bằng chứng lượt trước, không phải chạy lại test hoặc nghiệm thu toàn bộ hệ thống trong lượt này. Không phát hiện thêm lỗi build từ phạm vi rà soát; không kết luận source hết lỗi.
+- Còn thiếu nghiệm thu 2–4 thiết bị/reconnect, hard-kill/restart JVM giữa trận/ghi kết quả, Google callback thật, luật Java/JS qua fixture chung, cloud nhiều thiết bị, Android/iOS đa ngón, tải/FPS/RAM và backup/restore. Kiểm thử phục hồi hiện có khởi tạo lại coordinator, chưa thay thế diễn tập kill process.
+- Giới hạn triển khai: một runtime instance, chưa ownership/fencing xuyên process; tránh phát hành lúc còn trận RUNNING/RECOVERING. Catalog địch/item/cửa chỉ đọc JSON và restart để áp dụng, chưa CRUD ADMIN. Harness JS 41 assertion nằm dưới build bị ignore, chưa tích hợp vào CI.
+- Working tree vẫn có toàn bộ thay đổi chưa commit và file .run/game-outcome.js chưa được Git theo dõi; commit đang ở d725c22. Chưa nghiệm thu workflow/Docker/Render cho bản sửa này. Không mở Neon hoặc cập nhật hosting.
+- Sửa câu cũ “chưa có UI/chưa kiểm browser” trong tài liệu 20/22 và mục giới hạn hiện tại cho khớp source; cập nhật HANDOFF. Chỉ thay tài liệu, không sửa logic/env/key/DB hoặc commit/push/deploy.
+
+### Bổ sung cấu hình IDE khi lỗi Flyway local prod lặp lại — 21/10/2026
+
+- Đã kiểm JVM đọc ConfigData không auto-config/không datasource: cùng classpath hiện tại, chạy từ root với prod tường minh hoặc mặc định đều resolve được DB/Flyway từ .env thật; không mở kết nối. Đổi working directory sang build/classes/java/main tái hiện thiếu SPRING_DATASOURCE_URL. Không có bằng chứng thư mục thực tế của lần Run lỗi; cấu hình IDE hiện có chưa đặt working directory/profile tường minh.
+- Thêm .run/TankBattleApplication-prod-local.run.xml dùng chung (tên TankBattleApplication (prod local), module tank-battle-web.main, prod, $PROJECT_DIR$). Đã bổ sung working directory/prod vào cấu hình TankBattleApplication riêng của máy trong .idea/workspace.xml, file bị ignore; IDE đang mở có thể giữ bản cũ trong RAM nên cần chọn cấu hình chia sẻ mới. Không thay YAML/DB/key/env trong lượt này.
+- ProductionProfileTest kiểm thêm prod tường minh trong ca import file. Build/Spotless đạt 86 test Java, 0 failure/error/skipped. Smoke script đã chuyển từ APP_ENV_FILE/startup.env sang .env mặc định tại working directory tạm và xóa APP_ENV_FILE/DB/JWT khỏi env con. PostgreSQL riêng 39 test đạt; JAR prod đọc .env mặc định, Flyway V1–V6/schema, health UP, auth 401/en, admin login/API và rooms đều đạt. Fixture/keys/JVM/cluster đã dọn, không truy cập Neon. git diff --check đạt.
+- README/tài liệu 30/quy ước và bàn giao ghi rõ cấu hình IDE, tái hiện và giới hạn. Không khởi động ứng dụng thực bằng .env Neon, không commit/push/deploy hoặc thao tác app/tab của người dùng.
+
+### Sửa chạy local thiếu SPRING_DATASOURCE_URL — 21/10/2026
+
+- Nguyên nhân: .env có DB nhưng Java không nhận biến; prod mặc định yêu cầu datasource/Flyway. Đã thêm import ConfigData optional:file:${APP_ENV_FILE:./.env}[.properties] riêng prod, đọc từ working directory; biến hosting thật vẫn thắng file, profile test không import .env.
+- Bổ sung các khóa local còn thiếu trong .env: issuer localhost:8080, hai đường dẫn file:./secrets/... và AUTH_SECURE_COOKIE/SESSION_SECURE_COOKIE=false cho HTTP. Không đổi DB URL/user/password, bootstrap password, render.env hoặc cặp RSA. Mặc định cookie Render vẫn true, Docker không chứa .env.
+- ProductionProfileTest thêm fixture file và kiểm DB/Flyway/JWT/HTTP cookie, env hosting ưu tiên, test profile không đọc file local. Full build/Spotless đạt 86 test Java, 0 failure/error/skipped; không mở Neon. Hướng dẫn IDE/bootRun/JAR và cấu hình trong [30](30-chay-local-va-nap-env.md).
+- PostgreSQL riêng 39 test đạt và JAR prod khởi động bằng startup.env fixture đạt: import file, health UP, auth 401/en, admin login/API, rooms, Flyway V1–V6/schema. DB/JWT đã bị xóa khỏi env tiến trình con, chứng minh đọc file thực. Đã sửa thao tác dọn env trong script sang Remove-Item Env: để không để chuỗi rỗng ghi đè file trên PowerShell/.NET; fixture/JVM/cluster được dọn. Không khởi động source bằng .env thật hoặc truy cập Neon.
+- Đã kiểm JAR chứa cấu hình import mới nhưng không nhúng .env/render.env/PEM; .env đủ mỗi khóa cần thiết đúng một lần, không in giá trị. Tài liệu IDE/bootRun/JAR, mẫu env và bàn giao đã cập nhật. Chưa commit/push/deploy.
+
+### Sửa lỗi và bố cục bàn chơi — 21/10/2026
+
+- Đã xử lý ba lỗi của [28](28-ra-soat-chat-luong-21-10-2026.md): giữ owner/thế hệ phiên xuyên cloud sync và refresh/IndexedDB; dùng soloOutcome chung cho overlay/lịch sử; navigation vỏ công khai fallback cache khi mạng lỗi/HTTP 5xx. Không áp dụng fallback cho API/auth/health/Swagger.
+- Header nằm ngoài content-scroll; sidebar desktop đầy đủ/rail 80px nhớ lựa chọn; mobile drawer inert nền, focus/Tab/Escape/backdrop. Solo/online dùng native dialog nền tối và Canvas co theo cả hai chiều 4:3, không cuộn bàn chơi. Touch riêng portrait/landscape, reset đầu vào và Space trên nút vẫn kích hoạt đúng nút. Xác nhận rời solo tạm dừng engine trước khi hỏi.
+- Hồ sơ chỉ xem, bỏ form/UpdateProfileRequest và service/repository rename; GET /api/profile chính chủ, PUT cũ 403/USER_007/bundle vi/en kể cả ADMIN. Không đổi thông tin tài khoản/DDL/migration/env/key.
+- Đã chạy full build/Spotless: 83 test Java đạt; PostgreSQL loopback riêng 39 test đạt và prod-profile JAR smoke health/auth/admin/rooms/Flyway V1–V6 đạt. Harness JS tạm 41 assertion đạt cho outcome/IndexedDB/SW/cloud/refresh/BroadcastChannel/keyboard; syntax JS/sw đạt. Sau sửa màu nút cảm ứng và format template cuối đã đóng gói bootJar/spotlessCheck đạt.
+- Browser H2 in-memory/test classpath tại 127.0.0.1:18081: header đứng yên khi nội dung PageDown; rail 80px nhớ qua reload; solo dialog/focus/keyboard/pause/lưu/rời/chơi tiếp; viewport 1280×720, 390×844, 320×568, 844×390 không tràn bàn chơi, nút 44–46px; drawer khóa nền; profile không input/form/nút lưu. Screenshot ban đầu lỗi, mở lại browser đã chụp được menu/desktop/mobile dưới build/verification (tài liệu 29). Không dùng Neon/production.
+- Nghiệm thu online tìm thêm lỗi Bearer GET xóa CSRF cookie, khiến xin vé WebSocket AUTH_004. Đã sửa chiến lược CSRF session của API stateless, không đổi web chain hoặc bỏ CSRF; test cookie jar và HTTP thật chứng minh vé thành công/token sai vẫn 403. Browser đăng nhập → tạo phòng → socket connected → ready → Campaign/EASY → dialog trận → kết quả server → về sảnh đạt.
+- Nghiệm thu cuối: spotlessCheck build đạt 83 test, PostgreSQL 39 test 0 lỗi; JS syntax/harness 41 assertion và diff check đạt. Browser kiểm thêm vòng Tab/Escape/inert menu, hủy rời trận/focus Canvas, save/resume/landscape và màu nút ở theme sáng; console error rỗng. Ảnh menu/desktop/mobile trong build/verification, đã reset viewport/đóng tab/dừng JVM H2 riêng. Không chạy lại Render hoặc deploy source mới.
+- Luồng và giới hạn trong [29](29-sua-loi-va-bo-cuc-ban-choi.md). Multiplayer nhiều thiết bị/restart cứng/Google/đa ngón điện thoại thật/tải-FPS-RAM vẫn chưa nghiệm thu. Không tự commit/push/deploy/tắt máy trong lượt này.
+
+### Rà soát chất lượng web — 21/10/2026
+
+- Kiểm commit d725c22: Gradle offline/no-build-cache build/Spotless đạt **81 test Java**; PostgreSQL riêng đạt **37 test**, đều 0 failure/error/skipped. Prod JAR smoke đạt health/auth/admin login/API/rooms/schema/Flyway V1–V6. Không dùng Neon.
+- Render được kiểm qua browser: trang chủ mở, readiness UP, bảng xếp hạng công khai tải được/hiển thị trống. Công cụ web/native HTTP từng lỗi/timeout không được dùng để kết luận server down. Không tạo dữ liệu production.
+- Xác nhận ba lỗi chưa sửa: download cloud có thể ghi sang scope tài khoản mới khi đổi user trong lúc request chờ; kết quả Arena solo cùng chết tick cuối bị ghi LOSS thay DRAW; SW navigation không fallback vỏ offline khi HTTP 5xx. Chi tiết/cách tái hiện/ưu tiên ở [28](28-ra-soat-chat-luong-21-10-2026.md).
+- JS syntax toàn bộ module/sw đạt. Harness tạm dưới build/verification dùng module/hàm thực và fixture RAM để xác nhận lỗi; không thêm dependency frontend/test runner vào source. Chỉ cập nhật tài liệu, chưa sửa logic ứng dụng/env/key/migration hoặc commit/push.
+- Cần sửa ba lỗi rồi kiểm nhiều người/reconnect/server restart, cloud conflict/đổi user, Java-JS parity, điện thoại/Google thật và CI/Docker trước nghiệm thu cuối. Admin CRUD catalog vẫn chưa có.
+
 
 ### Hoàn thiện hình game, hiệu năng, chú thích và kiểm thử xuyên luồng — 21/10/2026
 
@@ -140,11 +182,11 @@ Báo cáo Java: build/reports/tests/test và build/test-results/test. PostgreSQL
 
 ## Giới hạn và việc chưa kiểm chứng
 
-- Đã có UI/Canvas, JS engine, IndexedDB/Service Worker; còn cần nghiệm thu gameplay browser, offline reload/save/restore, nhiều tab và cloud conflict. Người dùng hiện chỉ cho kiểm tra giao diện và test Java.
+- Đã kiểm browser solo/pause/lưu/chơi tiếp, offline reload, cloud cơ bản và Campaign online một người trên preview thử riêng; chi tiết mới nhất ở tài liệu 29. Còn multiplayer 2–4 thiết bị, cloud conflict nhiều thiết bị, Java/JS parity, Google và điện thoại thật.
 - Có vai trò/admin bootstrap và API kiểm quyền; catalog gameplay hiện ở JSON, chưa có CRUD API hay màn hình quản trị catalog.
 - Google thật cần OAuth Client; chưa thử callback thật. Session web ở RAM, restart cần đăng nhập lại.
-- Hiện đã có Git repository; người dùng tự push repo hieuv526034/tank-battle-web. Workflow GitHub/Docker/public Render chưa được chạy thật tại máy này.
-- Render URL người dùng cung cấp chưa được xác nhận health public qua công cụ. Env commit không tự cập nhật Dashboard.
+- Hiện đã có Git repository; người dùng tự push repo hieuv526034/tank-battle-web. Chưa nghiệm thu workflow GitHub/Docker và bản Render chứa các thay đổi chưa commit hiện tại.
+- Public Render từng mở được trang chủ/readiness UP/bảng hạng trống bằng browser tại lượt rà soát d725c22; đó không phải bằng chứng bản sửa mới đã deploy. Env commit không tự cập nhật Dashboard.
 - Chưa benchmark tải/query plan/HA hoặc hard-kill đúng thời điểm ghi DB; một runtime instance, chưa ownership xuyên process. Chỉ deploy khi không còn trận RUNNING/RECOVERING và không ai chơi trong lúc phát hành.
 - Crash có thể mất đoạn từ checkpoint cuối, khoảng hai giây khi storage khỏe. Test đạt không phải cam kết không còn mọi lỗi.
 - Neon từng được kiểm metadata chỉ đọc: PostgreSQL 18.6/public, không chạy Flyway hoặc ghi dữ liệu. Không truy cập lại Neon trong lượt sửa này.

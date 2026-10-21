@@ -1,3 +1,7 @@
+import {
+  soloOutcome
+} from './game-outcome.js';
+
 /** Lưu riêng theo userId; khách không thấy bản lưu cá nhân của tài khoản khác trên cùng máy. */
 let connection;
 
@@ -34,8 +38,10 @@ function database() {
   return connection;
 }
 /** Chạy trong một transaction; chỉ resolve sau commit, không resolve ở riêng request con. */
-async function operation(stores, mode, action) {
+async function operation(stores, mode, action, guard = () => {}) {
   const db = await database();
+  // Kiểm lại sau khi mở DB: phiên có thể đổi trong lúc IndexedDB đang chờ.
+  guard();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(stores, mode);
     let result;
@@ -63,24 +69,32 @@ export async function listSaves(scope) {
   return all.filter(save => save.scope === scope).sort((a, b) => a.slot - b.slot);
 }
 /** Clone snapshot trước khi ghi; giữ revision cloud cũ nếu autosave không truyền revision. */
-export function saveGame(scope, slot, state, revision) {
+export function saveGame(scope, slot, state, revision, guard = () => {}) {
   const snapshot = structuredClone(state);
   return operation(['saves'], 'readwrite', tx => {
     const store = tx.objectStore('saves');
     const existing = store.get(key(scope, slot));
-    existing.onsuccess = () => store.put({
-      key: key(scope, slot),
-      scope,
-      slot,
-      state: snapshot,
-      updatedAt: new Date().toISOString(),
-      revision: revision ?? existing.result?.revision ?? 0
-    });
-  });
+    existing.onsuccess = () => {
+      try {
+        guard();
+        store.put({
+          key: key(scope, slot),
+          scope,
+          slot,
+          state: snapshot,
+          updatedAt: new Date().toISOString(),
+          revision: revision ?? existing.result?.revision ?? 0
+        });
+      } catch {
+        tx.abort();
+      }
+    };
+  }, guard);
 }
 /** Xóa slot chỉ trong IndexedDB; xóa cloud là luồng API riêng có xác nhận. */
-export const deleteSave = (scope, slot) => operation(['saves'], 'readwrite', tx => tx.objectStore(
-  'saves').delete(key(scope, slot)));
+export const deleteSave = (scope, slot, guard) => operation(['saves'], 'readwrite', tx => tx
+  .objectStore(
+    'saves').delete(key(scope, slot)), guard);
 /** Đọc metadata tiến độ theo khóa trong vùng người chơi. */
 export const getMeta = key => operation(['meta'], 'readonly', tx => tx.objectStore('meta').get(
   key));
@@ -122,8 +136,7 @@ export function finishGame(scope, slot, state) {
   return operation(['results', 'saves', 'meta'], 'readwrite', tx => {
     const results = tx.objectStore('results');
     const player = state.players.solo;
-    const won = state.mode === 'CAMPAIGN' ? state.endReason === 'CAMPAIGN_CLEARED' : player.hp >
-      0 && state.endReason === 'LAST_SURVIVOR';
+    const outcome = soloOutcome(state);
     results.put({
       key: `${scope}:${state.matchId}`,
       scope,
@@ -131,8 +144,7 @@ export function finishGame(scope, slot, state) {
       mode: state.mode,
       difficulty: state.difficulty,
       stage: state.stage?.number || 1,
-      outcome: won ? 'WIN' : state.endReason === 'TIME_LIMIT' && player.hp > 0 && state
-        .mode === 'ARENA' ? 'DRAW' : 'LOSS',
+      outcome,
       score: player.score,
       kills: player.kills,
       endedAt: new Date().toISOString()
@@ -141,7 +153,7 @@ export function finishGame(scope, slot, state) {
     const all = results.getAll();
     all.onsuccess = () => all.result.filter(row => row.scope === scope).sort((a, b) => b.endedAt
       .localeCompare(a.endedAt)).slice(20).forEach(row => results.delete(row.key));
-    if (won && state.mode === 'CAMPAIGN') {
+    if (outcome === 'WIN' && state.mode === 'CAMPAIGN') {
       const meta = tx.objectStore('meta');
       const progressKey = `${scope}:progress:${state.difficulty}`;
       const progress = meta.get(progressKey);

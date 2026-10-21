@@ -44,6 +44,14 @@ Sai tài khoản, sai mật khẩu, tài khoản bị vô hiệu hóa hoặc tà
 
 ## 4. JWT
 
+Hồ sơ sau khi tạo chỉ được xem qua GET /api/profile hoặc /api/auth/me. PUT /api/profile cũ trả
+403/USER_007 (user.profile.read_only, vi/en), không có luồng đổi tên/username/quyền từ UI/API.
+Không thay dữ liệu tài khoản hiện có khi cập nhật source. Đọc [29](29-sua-loi-va-bo-cuc-ban-choi.md).
+
+API chain stateless đặt chiến lược CSRF session riêng để Bearer GET không xóa XSRF-TOKEN mỗi request.
+CsrfFilter vẫn bắt buộc CSRF cho POST auth, kể cả có Bearer; web chain/form/Google giữ chiến lược session
+mặc định. AuthSystemTest kiểm cookie jar và từ chối token CSRF sai; chi tiết nguyên nhân ở tài liệu 29.
+
 Access TTL mặc định 5 phút, refresh family tối đa 7 ngày, cấu hình trong tank.auth. JWT gồm iss, aud, sub=userId, sid, username, roles, token_kind=access, iat, exp và jti.
 
 Decoder cố định RS256, kiểm tra chữ ký/issuer/thời gian, audience và claim bắt buộc, sau đó một lookup theo sid + userId để kiểm tra phiên còn hiệu lực và user enabled. Cơ chế này có đọc DB trên mỗi request API nhằm thu hồi access ngay từ request tiếp theo; chưa phải JWT hoàn toàn không trạng thái và chưa có kết quả đo tải.

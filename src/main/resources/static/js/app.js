@@ -16,7 +16,8 @@ import {
   logout,
   user,
   onAuth,
-  updateProfile,
+  captureIdentity,
+  assertIdentity,
   webSession
 } from './api.js';
 import {
@@ -45,9 +46,13 @@ import {
   step
 } from './offline-engine.js';
 import {
+  soloOutcome
+} from './game-outcome.js';
+import {
   GameRenderer,
   GameControls,
   gameMarkup,
+  mountBattle,
   updateHud
 } from './game-renderer.js';
 import {
@@ -136,15 +141,27 @@ const option = (value, label, selected) =>
     <option value="${value}" ${selected === value ? 'selected' : ''}>${label}</option>
     `;
 const mobileMenu = matchMedia('(max-width: 760px), (max-width: 1000px) and (max-height: 500px)');
+// Chỉ nhớ sở thích bố cục, không chứa tài khoản hoặc quyền. Mobile luôn dùng drawer riêng.
+let compactMenu = false;
+try {
+  compactMenu = localStorage.getItem('utc-tank-menu-compact') === 'yes';
+} catch {}
+document.documentElement.dataset.sidebar = compactMenu ? 'compact' : 'expanded';
 
 /** Đóng lớp menu mobile, khóa focus sidebar khi nó nằm ngoài màn hình. */
 function closeMenu() {
-  document.querySelector('#sidebar').classList.remove('open');
-  document.querySelector('#sidebar').inert = mobileMenu.matches;
+  const sidebar = document.querySelector('#sidebar');
+  sidebar.classList.remove('open');
+  sidebar.inert = mobileMenu.matches;
+  sidebar.removeAttribute('role');
+  sidebar.removeAttribute('aria-modal');
+  document.querySelector('#content-scroll').inert = false;
+  document.querySelector('#topbar').inert = false;
   document.querySelector('#menu-backdrop').hidden = true;
-  document.querySelector('[data-action=menu]')?.setAttribute('aria-expanded', 'false');
+  document.querySelector('[data-action=menu]')?.setAttribute('aria-expanded',
+    String(!mobileMenu.matches && !compactMenu));
 }
-mobileMenu.addEventListener('change', closeMenu);
+mobileMenu.addEventListener('change', () => renderChrome());
 
 /** Dựng sidebar/topbar theo route, tài khoản, trạng thái mạng và theme; không dựng lại Canvas. */
 function renderChrome() {
@@ -164,8 +181,10 @@ function renderChrome() {
     `
       <a class="nav-link ${(href === '/' ? path === '/' : path.startsWith(href)) ? 'active' : ''}" href="${
         href
-      }" data-link ${(href === '/' ? path === '/' : path.startsWith(href)) ? 'aria-current="page"' : ''}>
-        ${icon(symbol)}${title}${href === '/offline' ? '<span class="nav-mini">SOLO</span>' : ''}</a>
+      }" data-link title="${title}" aria-label="${title}" ${
+        (href === '/' ? path === '/' : path.startsWith(href)) ? 'aria-current="page"' : ''}>
+        ${icon(symbol)}<span class="nav-text">${title}</span>${
+          href === '/offline' ? '<span class="nav-mini">SOLO</span>' : ''}</a>
       `
   ).join('');
   document.querySelector('#sidebar').innerHTML =
@@ -174,30 +193,34 @@ function renderChrome() {
         ${icon('x')}</button>
       <a href="/" data-link class="brand" aria-label="UTC Tank Battle trang chủ">
         <img src="/icons/tank.svg" alt="">
-        <div>
+        <div class="brand-copy">
           <strong>TANK BATTLE</strong>
           <span>UTC · BATTLEFIELD</span>
         </div>
       </a>
-      <div class="nav-label">CHIẾN TRƯỜNG</div>
-      <nav>${nav(links)}</nav>
-      <div class="nav-label">CÁ NHÂN</div>
-      <nav>${nav(personal)}</nav>
+      <div class="sidebar-navigation">
+        <div class="nav-label" id="nav-battle-label">CHIẾN TRƯỜNG</div>
+        <nav aria-labelledby="nav-battle-label">${nav(links)}</nav>
+        <div class="nav-label" id="nav-personal-label">CÁ NHÂN</div>
+        <nav aria-labelledby="nav-personal-label">${nav(personal)}</nav>
+      </div>
       <div class="sidebar-bottom">
-        <a class="nav-link ${path === '/help' ? 'active' : ''}" data-link href="/help">${
+        <a class="nav-link ${path === '/help' ? 'active' : ''}" data-link href="/help"
+          title="Hướng dẫn chơi" aria-label="Hướng dẫn chơi">${
           icon('circle-help')
-        }Hướng dẫn chơi${icon('arrow-up-right')}</a>
+        }<span class="nav-text">Hướng dẫn chơi</span><span class="nav-extra">${icon('arrow-up-right')}</span></a>
         <div class="offline-note">
           <strong>${icon(offlineReady ? 'circle-check' : 'download')}<span>${
             offlineReady ? 'Đã sẵn sàng offline' : 'Chuẩn bị chơi mọi nơi'
           }</span>
           </strong>
-          <p>${
-            offlineReady ? 'Tài nguyên đã lưu trên máy. Mở Solo và xuất trận khi không có mạng.' :
-              'Mở trò chơi khi có mạng để tải đủ tài nguyên cho chế độ solo.'
-          }</p>
+          <p>${offlineReady ? 'Vào Solo để chơi mọi lúc.' : 'Tải một lần, chơi khi mất mạng.'}</p>
         </div>
-        <div class="sidebar-user">${avatar(user?.displayName || 'Khách')}<div>
+        <div class="sidebar-user">
+          <a href="${user ? '/profile' : '/login'}" data-link
+            title="${user ? 'Xem hồ sơ' : 'Đăng nhập'}" aria-label="${user ? 'Xem hồ sơ' : 'Đăng nhập'}">${
+              avatar(user?.displayName || 'Khách')
+            }</a><div class="sidebar-user-info">
             <strong>${esc(user?.displayName || 'Chỉ huy mới')}</strong>
             <small>${user ? 'Tài khoản đã đăng nhập' : 'Sẵn sàng cho trận đầu?'}</small>
           </div>${
@@ -211,8 +234,10 @@ function renderChrome() {
       `;
   document.querySelector('#topbar').innerHTML =
     `
-      <button class="icon-button mobile-menu" data-action="menu" aria-label="Mở menu"
-        aria-expanded="false">${icon('menu')}</button>
+      <button class="icon-button menu-toggle" data-action="menu" aria-label="${
+        mobileMenu.matches ? 'Mở menu' : compactMenu ? 'Mở rộng menu' : 'Thu gọn menu'
+      }" title="${mobileMenu.matches ? 'Mở menu' : compactMenu ? 'Mở rộng menu' : 'Thu gọn menu'}"
+        aria-expanded="${!mobileMenu.matches && !compactMenu}" aria-controls="sidebar">${icon('menu')}</button>
       <div class="breadcrumb">
         <span>UTC Tank Battle</span>${icon('chevron-right')}<b>${esc(label())}</b>
       </div>
@@ -252,11 +277,15 @@ async function navigate(path, replace = false) {
   const target = new URL(path, location.origin);
   if (solo?.state.phase === 'RUNNING' && !solo.paused && target.pathname + target.search !==
     location.pathname + location.search) {
+    const activeSolo = solo;
+    activeSolo.toggle();
     if (!await confirmAction('Lưu trận và rời thao trường?',
-        'Trận solo được lưu trên máy. Bạn có thể tiếp tục ở mục Bản lưu của tôi.', 'Lưu và rời'))
+        'Trận solo được lưu trên máy. Bạn có thể tiếp tục ở mục Bản lưu của tôi.', 'Lưu và rời'
+      )) {
+      if (solo === activeSolo && activeSolo.paused) activeSolo.toggle();
       return;
-    solo.paused = true;
-    await solo.persist().catch(error => toast(error.message, true));
+    }
+    await activeSolo.persist().catch(error => toast(error.message, true));
   }
   history[replace ? 'replaceState' : 'pushState']({}, '', target.pathname + target.search);
   document.querySelector('#sidebar').classList.remove('open');
@@ -342,7 +371,7 @@ async function renderRoute() {
   if (alive(version)) main.focus({
     preventScroll: true
   });
-  window.scrollTo(0, 0);
+  if (alive(version)) document.querySelector('#content-scroll').scrollTop = 0;
 }
 
 /** Dựng trang chủ ngay; bảng hạng tải sau và chỉ gắn khi route còn hiệu lực. */
@@ -1044,7 +1073,7 @@ async function historyPageView(version) {
       `
   );
 }
-/** Lấy hồ sơ và thống kê từ API riêng; form cập nhật dùng submitForm chung. */
+/** Hồ sơ chỉ đọc; không dựng input/form cập nhật, API cũng từ chối thay đổi. */
 async function profilePage(version) {
   setContent(version, loading());
   const rank = await api('/api/rankings/me');
@@ -1078,18 +1107,12 @@ async function profilePage(version) {
             <div class="panel-title">
               <h2>Thông tin cá nhân</h2>${icon('user-round')}
             </div>
-            <form class="form-stack" data-form="profile">
-              <div class="error-box" role="alert"></div>${
-                field('displayName', 'Tên hiển thị', 'text',
-                  `required minlength="2" maxlength="30" value="${esc(user.displayName)}" autocomplete="nickname" aria-describedby="displayName-error"`,
-                  'Tên sẽ xuất hiện trong phòng chơi và trên bảng xếp hạng.')
-              }<div class="field">
-                <label for="profile-username">Tên đăng nhập</label>
-                <input id="profile-username" value="${esc(user.username)}" readonly>
-                <small>Tên đăng nhập được giữ cố định.</small>
-              </div>
-              <button class="btn primary" type="submit">${icon('check')}Lưu thay đổi</button>
-            </form>
+            <dl class="account-details">
+              <div><dt>Tên hiển thị</dt><dd>${esc(user.displayName)}</dd></div>
+              <div><dt>Tên đăng nhập</dt><dd>@${esc(user.username)}</dd></div>
+            </dl>
+            <p class="account-readonly">${icon('lock-keyhole')}Thông tin tài khoản được giữ cố định
+              sau khi tạo. Bạn chỉ có thể xem tại đây.</p>
           </section>
           <section class="panel">
             <h2>Quản lý phiên đăng nhập</h2>
@@ -1465,6 +1488,7 @@ async function soloGame(version, slot) {
   }
   setContent(version, gameMarkup(state.mode === 'CAMPAIGN' ?
     `Chiến dịch · Cửa ${state.stage.number}` : 'Arena · Đấu bot', true));
+  cleanup(mountBattle());
   const renderer = new GameRenderer(document.querySelector('#battle-canvas'), 'solo');
   let stopped = false,
     finished = false,
@@ -1516,6 +1540,11 @@ async function soloGame(version, slot) {
     last = performance.now();
     accumulator = 0;
     overlay.classList.toggle('hidden', !value);
+    document.querySelector('[data-action=pause-solo]')?.setAttribute('aria-pressed', String(
+      value));
+    if (!value) document.querySelector('#battle-canvas')?.focus({
+      preventScroll: true
+    });
     if (value) overlay.innerHTML =
       `
         <div>${icon('pause', 'large')}<h2>Thao trường tạm nghỉ</h2>
@@ -1527,7 +1556,12 @@ async function soloGame(version, slot) {
           </div>
         </div>
         `;
-    if (value) persist().catch(() => {});
+    if (value) {
+      overlay.querySelector('[data-action=pause-solo]')?.focus({
+        preventScroll: true
+      });
+      persist().catch(() => {});
+    }
   }
   const controls = new GameControls(() => pause(!solo.paused));
   controls.onHidden = () => pause(true);
@@ -1542,10 +1576,9 @@ async function soloGame(version, slot) {
     if (finished || stopped) return;
     finished = true;
     controls.reset();
-    const won = state.mode === 'CAMPAIGN' ? state.endReason === 'CAMPAIGN_CLEARED' : state
-      .players.solo.hp > 0 && state.endReason === 'LAST_SURVIVOR';
-    const draw = state.mode === 'ARENA' && state.players.solo.hp > 0 && state.endReason ===
-      'TIME_LIMIT';
+    const outcome = soloOutcome(state);
+    const won = outcome === 'WIN';
+    const draw = outcome === 'DRAW';
     let savedResult = true;
     saveQueue = saveQueue.catch(() => {}).then(() => storage.finishGame(owner, slot, state))
       .catch(async error => {
@@ -1623,6 +1656,7 @@ async function onlineGame(version, id) {
   if (!alive(version)) return;
   setContent(version, gameMarkup(metadata.mode === 'CAMPAIGN' ?
     `${metadata.roomName} · Cửa ${metadata.stage}` : metadata.roomName));
+  cleanup(mountBattle());
   const renderer = new GameRenderer(document.querySelector('#battle-canvas'), user.id);
   const controls = new GameControls();
   const socket = current?.code === metadata.roomCode && !['FINISHED', 'ABORTED'].includes(metadata
@@ -1808,33 +1842,68 @@ async function matchDetail(id) {
       `
   );
 }
-/** Đẩy snapshot kèm revision; xung đột yêu cầu chọn bản giữ lại trước khi ghi đè. */
-async function uploadSave(slot, force = false) {
+/** Chụp cùng chủ cho khóa slot, request và IndexedDB trước bất kỳ await nào. */
+function saveContext() {
+  return {
+    owner: scope(),
+    identity: captureIdentity(),
+    version: routeVersion
+  };
+}
+
+/** Từ chối thao tác cũ nếu đổi phiên hoặc chuyển từ vùng offline sang vùng khác. */
+function checkSaveContext(context) {
+  assertIdentity(context.identity);
+  if (!alive(context.version)) throw new Error(
+    'Màn hình đã thay đổi. Mở lại Bản lưu để thực hiện thao tác đồng bộ.');
+  if (context.owner !== scope()) throw new Error(
+    'Vùng lưu đã thay đổi. Vui lòng thực hiện lại ở tài khoản hiện tại.');
+}
+
+/** Đẩy snapshot kèm revision; giữ nguyên danh tính qua refresh/xung đột/ghi revision local. */
+async function uploadSave(slot, force, context) {
+  checkSaveContext(context);
   if (!user) {
     toast('Đăng nhập để đồng bộ đám mây.', true);
     return;
   }
-  const owner = scope(),
-    local = await storage.getSave(owner, slot);
+  const {
+    owner,
+    identity
+  } = context;
+  const local = await storage.getSave(owner, slot);
+  checkSaveContext(context);
   if (!local) throw new Error('Vị trí này chưa có bản lưu trên máy.');
-  const metadata = await api('/api/offline-saves');
+  const metadata = await api('/api/offline-saves', {
+    identity
+  });
+  checkSaveContext(context);
   const remoteMetadata = metadata.find(row => row.slot === slot);
   let revision = remoteMetadata ? (local.revision || 0) : 0;
   if (force) revision = remoteMetadata?.revision || 0;
   try {
     const remote = await api(`/api/offline-saves/${slot}`, {
+      identity,
       method: 'PUT',
       body: {
         expectedRevision: revision,
         state: restoreGame(local.state)
       }
     });
-    await storage.saveGame(owner, slot, local.state, remote.revision);
+    checkSaveContext(context);
+    await storage.saveGame(owner, slot, local.state, remote.revision,
+      () => checkSaveContext(context));
+    checkSaveContext(context);
     toast('Đã lưu tiến trình lên đám mây.');
-    await renderRoute();
+    if (alive(context.version)) await renderRoute();
   } catch (error) {
+    checkSaveContext(context);
     if (error.code !== 'SAVE_002') throw error;
-    const latest = await api('/api/offline-saves');
+    const latest = await api('/api/offline-saves', {
+      identity
+    });
+    checkSaveContext(context);
+    if (!alive(context.version)) return;
     const remote = latest.find(row => row.slot === slot);
     if (!remote) {
       toast('Bản đám mây vừa được xóa ở thiết bị khác. Bấm lưu lên mây để tạo lại.', true);
@@ -1863,18 +1932,32 @@ async function uploadSave(slot, force = false) {
   }
 }
 /** Kiểm snapshot cloud tương thích trước khi ghi slot local theo lựa chọn người chơi. */
-async function downloadSave(slot) {
-  const remote = await api(`/api/offline-saves/${slot}`),
+async function downloadSave(slot, context) {
+  checkSaveContext(context);
+  const {
+    owner,
+    identity
+  } = context;
+  const remote = await api(`/api/offline-saves/${slot}`, {
+    identity
+  });
+  checkSaveContext(context);
+  const
     state = restoreGame(remote.state),
-    owner = scope(),
     local = await storage.getSave(owner, slot);
+  checkSaveContext(context);
   if (local && !await confirmAction('Thay bản lưu trên máy?',
       `Bản đám mây được lưu lúc ${date(remote.updatedAt)} sẽ thay tiến trình hiện có ở vị trí ${slot}.`,
       'Tải về máy')) return;
-  await storage.saveGame(owner, slot, state, remote.revision);
+  checkSaveContext(context);
+  await storage.saveGame(owner, slot, state, remote.revision,
+    () => checkSaveContext(context));
+  checkSaveContext(context);
   toast('Đã tải bản lưu về thiết bị.');
-  closeModal();
-  await renderRoute();
+  if (alive(context.version)) {
+    closeModal();
+    await renderRoute();
+  }
 }
 /** Điểm vào cho form tài khoản/phòng/solo; lỗi trả về đúng trường qua formError. */
 async function submitForm(form) {
@@ -1893,10 +1976,6 @@ async function submitForm(form) {
     form.reset();
     toast('Tạo tài khoản thành công. Bạn có thể đăng nhập ngay.');
     await navigate('/login');
-  } else if (type === 'profile') {
-    await updateProfile(values.displayName);
-    toast('Đã cập nhật tên hiển thị.');
-    await renderRoute();
   } else if (type === 'create-room') {
     const room = await api('/api/rooms', {
       method: 'POST',
@@ -1925,13 +2004,16 @@ async function submitForm(form) {
     await navigate(`/play/${result.matchId}`);
   } else if (type === 'solo-start') {
     const slot = Number(values.slot),
-      owner = scope();
+      context = saveContext(),
+      owner = context.owner;
     const release = await lockSolo(owner, slot);
     try {
+      checkSaveContext(context);
       const previous = await storage.getSave(owner, slot);
       if (previous && !await confirmAction('Bắt đầu trận mới?',
           `Tiến trình cũ ở bản lưu ${slot} sẽ được thay bằng trận mới.`, 'Bắt đầu trận mới'))
         return;
+      checkSaveContext(context);
       const progress = await storage.getMeta(`${owner}:progress:${values.difficulty}`) || [];
       if (values.mode === 'CAMPAIGN' && Number(values.stage) > 1 && !progress.includes(Number(
           values.stage) - 1)) throw new Error(
@@ -1942,7 +2024,10 @@ async function submitForm(form) {
         bots: Number(values.bots),
         name: user?.displayName || 'Chỉ huy'
       });
-      await storage.saveGame(owner, slot, state, previous?.revision || 0);
+      checkSaveContext(context);
+      await storage.saveGame(owner, slot, state, previous?.revision || 0,
+        () => checkSaveContext(context));
+      checkSaveContext(context);
     } finally {
       release();
     }
@@ -1966,11 +2051,29 @@ async function handleAction(element) {
     return;
   }
   if (action === 'menu') {
-    const open = document.querySelector('#sidebar').classList.toggle('open');
-    document.querySelector('#sidebar').inert = !open && mobileMenu.matches;
-    document.querySelector('#menu-backdrop').hidden = !open;
-    element.setAttribute('aria-expanded', String(open));
-    if (open) document.querySelector('.sidebar-close')?.focus();
+    if (!mobileMenu.matches) {
+      compactMenu = !compactMenu;
+      document.documentElement.dataset.sidebar = compactMenu ? 'compact' : 'expanded';
+      try {
+        localStorage.setItem('utc-tank-menu-compact', compactMenu ? 'yes' : 'no');
+      } catch {}
+      renderChrome();
+      document.querySelector('[data-action=menu]')?.focus();
+      return;
+    }
+    const sidebar = document.querySelector('#sidebar');
+    if (sidebar.classList.contains('open')) closeMenu();
+    else {
+      sidebar.classList.add('open');
+      sidebar.inert = false;
+      sidebar.setAttribute('role', 'dialog');
+      sidebar.setAttribute('aria-modal', 'true');
+      document.querySelector('#content-scroll').inert = true;
+      document.querySelector('#topbar').inert = true;
+      document.querySelector('#menu-backdrop').hidden = false;
+      element.setAttribute('aria-expanded', 'true');
+      document.querySelector('.sidebar-close')?.focus();
+    }
     return;
   }
   if (action === 'close-menu') {
@@ -2108,13 +2211,17 @@ async function handleAction(element) {
     return;
   }
   if (action === 'delete-local') {
-    const owner = scope(),
+    const context = saveContext(),
+      owner = context.owner,
       release = await lockSolo(owner, slot);
     try {
+      checkSaveContext(context);
       if (await confirmAction('Xóa bản lưu trên máy?',
           `Xóa tiến trình tại vị trí ${slot} trên thiết bị này. Bản đám mây được giữ riêng.`,
           'Xóa bản trên máy', true)) {
-        await storage.deleteSave(owner, slot);
+        checkSaveContext(context);
+        await storage.deleteSave(owner, slot, () => checkSaveContext(context));
+        checkSaveContext(context);
         toast('Đã xóa bản lưu trên máy.');
         await renderRoute();
       }
@@ -2124,36 +2231,45 @@ async function handleAction(element) {
     return;
   }
   if (action === 'upload-save' || action === 'force-upload') {
-    const release = await lockSolo(scope(), slot);
+    const context = saveContext();
+    const release = await lockSolo(context.owner, slot);
     try {
-      await uploadSave(slot, action === 'force-upload');
+      await uploadSave(slot, action === 'force-upload', context);
     } finally {
       release();
     }
     return;
   }
   if (action === 'download-save') {
-    const owner = scope(),
-      release = await lockSolo(owner, slot);
+    const context = saveContext(),
+      release = await lockSolo(context.owner, slot);
     try {
-      await downloadSave(slot);
+      await downloadSave(slot, context);
     } finally {
       release();
     }
     return;
   }
   if (action === 'delete-cloud') {
-    const owner = scope(),
+    const context = saveContext(),
+      owner = context.owner,
       release = await lockSolo(owner, slot);
     try {
+      checkSaveContext(context);
       if (await confirmAction('Xóa bản lưu đám mây?',
           `Xóa bản đám mây tại vị trí ${slot}. Bản trên máy vẫn được giữ.`, 'Xóa bản đám mây',
           true)) {
+        checkSaveContext(context);
         await api(`/api/offline-saves/${slot}?revision=${element.dataset.revision}`, {
+          identity: context.identity,
           method: 'DELETE'
         });
-        const local = await storage.getSave(scope(), slot);
-        if (local) await storage.saveGame(scope(), slot, local.state, 0);
+        checkSaveContext(context);
+        const local = await storage.getSave(owner, slot);
+        checkSaveContext(context);
+        if (local) await storage.saveGame(owner, slot, local.state, 0,
+          () => checkSaveContext(context));
+        checkSaveContext(context);
         toast('Đã xóa bản đám mây.');
         await renderRoute();
       }
@@ -2169,6 +2285,9 @@ async function handleAction(element) {
   if (action === 'save-solo') {
     await solo?.persist();
     toast('Đã lưu tiến trình trên thiết bị.');
+    document.querySelector('#battle-canvas')?.focus({
+      preventScroll: true
+    });
     return;
   }
   if (action === 'resume-match') {
@@ -2297,8 +2416,25 @@ window.addEventListener('themechange', () => {
   });
 });
 window.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && document.querySelector('#sidebar').classList.contains('open'))
+  const sidebar = document.querySelector('#sidebar');
+  if (!sidebar.classList.contains('open')) return;
+  if (event.key === 'Escape') {
+    event.preventDefault();
     closeMenu();
+    document.querySelector('[data-action=menu]')?.focus();
+  } else if (event.key === 'Tab') {
+    const items = [...sidebar.querySelectorAll('a[href],button:not(:disabled)')]
+      .filter(item => item.getClientRects().length);
+    const first = items[0],
+      last = items.at(-1);
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first?.focus();
+    }
+  }
 });
 window.addEventListener('online', () => {
   renderChrome();
@@ -2319,15 +2455,16 @@ onAuth(event => {
   const changed = lastScope !== scope();
   lastScope = scope();
   renderChrome();
-  if (!user) {
+  if (!user || changed) {
     connection?.stop();
     connection = null;
   }
   if (changed) {
+    closeModal();
     if (solo) {
       solo.paused = true;
       navigate('/offline', true);
-    } else if (['/offline', '/saves', '/history'].includes(currentPath())) renderRoute();
+    } else if (!['/login', '/register'].includes(currentPath())) renderRoute();
   }
 });
 /** Đồng bộ nhãn sau khi worker trả lời; giữ lựa chọn đang nhập trong form solo. */

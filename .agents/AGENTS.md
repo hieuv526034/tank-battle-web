@@ -25,6 +25,8 @@
 - Tái sử dụng base và `common.constant.AppConstants`; tránh base hình thức làm code khó hiểu.
 - Không query/save repository theo từng phần tử. Dùng projection, query theo lô và batch khi phù hợp; engine chỉ dùng RAM.
 - Game solo offline trong trình duyệt sau khi đã tải đủ, không bắt người chơi chạy Java.
+- Hồ sơ tài khoản chỉ xem sau khi tạo; không mở lại đổi tên/username/role trong UI/API. PUT /api/profile cũ trả USER_007/403; không cập nhật dữ liệu tài khoản hiện có khi sửa source.
+- Header/sidebar giữ vị trí, nội dung cuộn trong content-scroll; sidebar desktop thu gọn/mở rộng, mobile drawer. Bàn chơi dùng dialog nền tối, bản đồ 4:3 vừa viewport; không cho phím game điều khiển menu nền. Luồng mới ở tài liệu 29.
 - Cả solo và online có lưu/chơi tiếp; online có phục hồi từ checkpoint sau server restart.
 - Có lịch sử, xếp hạng, JWT/refresh, Google OIDC, độ khó, cửa ải và item buff.
 - Có Swagger chi tiết: schema, ví dụ, điều kiện quyền/CSRF, lỗi và hướng dẫn thử.
@@ -61,3 +63,4 @@
 - Bootstrap admin chạy sau Flyway V6 với guard DB; không đổi mật khẩu hoặc tự nâng quyền tài khoản trùng username. BOOTSTRAP_ADMIN_PASSWORD bắt buộc khi tạo lần đầu; không có mật khẩu mặc định cho ứng dụng. Test có cấu hình/DB riêng trong src/test.
 - Database production neondb, schema tank_battle: Flyway/history, Hibernate default_schema và Hikari schema phải thống nhất tank_battle. App/Flyway hiện dùng direct endpoint + Hikari pool 5; không dựa vào SET search_path của Neon pooler. Test không dùng Neon.
 - Giữ riêng quyền ADMIN trên /api/admin/**; cấu hình gameplay hiện ở JSON, chưa có màn hình/API CRUD quản trị catalog.
+- Prod tự import optional:file:${APP_ENV_FILE:./.env}[.properties] tại working directory; IDE dùng cấu hình chia sẻ .run/TankBattleApplication-prod-local.run.xml (prod, $PROJECT_DIR$). Không để IDE tự đoán working directory vì optional import có thể bỏ qua .env rồi lỗi Flyway. Biến môi trường thật ưu tiên cao hơn. Không đưa import .env vào profile test; ProductionProfileTest dùng fixture. .env local có JWT file:./secrets/... và cờ cookie HTTP false, Render vẫn mặc định HTTPS true và không đóng gói .env. Smoke JAR dùng .env mặc định trong working directory tạm, không APP_ENV_FILE hoặc DB/JWT trong env con. Xem tài liệu 30; không dùng Neon để kiểm thử startup.

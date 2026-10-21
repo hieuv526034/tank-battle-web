@@ -16,7 +16,7 @@ Thay đổi default-schema không di chuyển dữ liệu/bảng cũ từ public
 
 Đã kết nối JDBC qua SSL, chạy SELECT chỉ đọc: database `neondb`, PostgreSQL 18.6, schema `public` chưa có bảng tại thời điểm kiểm tra 20/10/2026. Không chạy ứng dụng/Flyway, không tạo schema/bảng/tài khoản thử trên Neon.
 
-Thông tin kết nối thật nằm trong `.env` và `render.env`. Theo yêu cầu mới nhất của chủ đồ án ngày 20/10/2026, hai file này được phép commit để nhóm dùng chung cấu hình demo; `.gitignore` đã cho phép. [.env.example](../../.env.example) giữ mẫu để tạo môi trường khác. Docker vẫn loại env khỏi image; script không in giá trị vào log. Spring không tự nạp `.env`, cần nạp biến vào process hoặc import cấu hình trên Render. Theo yêu cầu mới nhất, RSA PEM trong secrets/ cũng được phép commit. Docker vẫn loại key khỏi image; đưa hai file vào Secret Files trên Render.
+Thông tin kết nối thật nằm trong `.env` và `render.env`. Theo yêu cầu mới nhất của chủ đồ án ngày 20/10/2026, hai file này được phép commit để nhóm dùng chung cấu hình demo; `.gitignore` đã cho phép. [.env.example](../../.env.example) giữ mẫu cho máy phát triển. Spring hiện tự import .env ở working directory khi dùng prod; biến môi trường thật có ưu tiên cao hơn. Cách chạy IDE/bootRun và APP_ENV_FILE đọc [30](30-chay-local-va-nap-env.md). Docker vẫn loại env/key khỏi image; Render dùng Environment/Secret Files. Script không in giá trị vào log; RSA PEM trong secrets/ vẫn được phép commit theo quyết định chủ đồ án.
 
 JDBC dùng `jdbc:postgresql://YOUR_NEON_DIRECT_HOST/neondb?sslmode=require&channelBinding=require&currentSchema=tank_battle`. Tên tham số của pgJDBC là `channelBinding`, khác `channel_binding` trong URI của libpq. Xem [tài liệu driver](https://jdbc.postgresql.org/documentation/use/). Đã pin pgJDBC 42.7.14 và Flyway 11.20.3 hỗ trợ PostgreSQL 18; hai module Flyway giữ cùng phiên bản.
 
@@ -35,7 +35,7 @@ Script nạp biến môi trường và chạy `tools/CheckDatabase.java`. JDBC �
 1. Có máy chủ chạy ứng dụng và domain HTTPS; Neon chỉ cung cấp DB.
 2. Tạo cặp RSA PKCS8/X509 ổn định, lưu trong secrets/ và cấu hình `JWT_PRIVATE_KEY`, `JWT_PUBLIC_KEY`, `AUTH_ISSUER` đúng URL public.
 3. Bổ sung các biến còn thiếu trong `.env` từ `.env.example`. Profile prod mặc định bắt buộc keys ổn định; khóa tạm chỉ phục vụ test.
-4. Nạp môi trường: `. .\tools\Import-LocalEnvironment.ps1`. Đây chỉ nạp KEY=VALUE vào process, không thực thi nội dung file.
+4. Khi chạy từ thư mục gốc, Spring tự đọc .env. Công cụ Java độc lập vẫn có thể nạp bằng `. .\tools\Import-LocalEnvironment.ps1`; script chỉ nạp KEY=VALUE vào process, không thực thi nội dung file. Trên Render import render.env thay cho .env local.
 5. Ứng dụng mặc định profile prod, gồm cả khi chạy bootRun trên máy phát triển. Lần khởi đầu Flyway tự chạy V1–V6 tạo bảng và seed hệ thống; không dùng `ddl-auto=create/drop`.
 6. Hikari giới hạn mặc định 5 kết nối, minimumIdle=0; dùng direct endpoint và schema tank_battle. Có thể chỉnh `DB_POOL_SIZE` sau khi đo thực tế.
 7. Kiểm tra health/readiness, migration, HTTPS/cookie, WebSocket qua reverse proxy, Google callback và backup/restore trước demo public.

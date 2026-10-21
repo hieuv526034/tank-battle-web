@@ -27,15 +27,17 @@
       hidden></button>
     <div class="workspace">
       <header id="topbar" class="topbar"></header>
-      <!-- Router thay nội dung main và thu hồi listener của màn hình cũ. -->
-      <main id="main" tabindex="-1">
-        <div class="initial-loading"><span class="loader"></span>Đang mở trạm chỉ huy…</div>
-      </main>
-      <footer class="footer">
-        <span>UTC TANK BATTLE <b>© 2026</b></span>
-        <span>Ít lời. Nhiều chiến thuật.</span>
-        <a href="/help" data-link>Hướng dẫn điều khiển ↗</a>
-      </footer>
+      <!-- Chỉ vùng này cuộn; header/sidebar luôn giữ vị trí trong viewport. -->
+      <div id="content-scroll" class="content-scroll">
+        <main id="main" tabindex="-1">
+          <div class="initial-loading"><span class="loader"></span>Đang mở trạm chỉ huy…</div>
+        </main>
+        <footer class="footer">
+          <span>UTC TANK BATTLE <b>© 2026</b></span>
+          <span>Ít lời. Nhiều chiến thuật.</span>
+          <a href="/help" data-link>Hướng dẫn điều khiển ↗</a>
+        </footer>
+      </div>
     </div>
   </div>
   <div id="toasts" class="toasts" aria-live="polite" aria-atomic="false"></div>

@@ -93,8 +93,8 @@ tank:
     private-key: ${JWT_PRIVATE_KEY:}
     public-key: ${JWT_PUBLIC_KEY:}
     ephemeral-keys: false
-    # Ứng dụng dùng HTTPS; test ghi đè false trong src/test/resources.
-    secure-cookie: true
+    # Render/HTTPS mặc định true; .env của máy phát triển chọn false khi dùng HTTP.
+    secure-cookie: ${AUTH_SECURE_COOKIE:true}
 springdoc:
   # OpenApiConfig bổ sung header ngôn ngữ/quyền; prod tắt cả spec và UI trong file profile.
   api-docs:

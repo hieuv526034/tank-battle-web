@@ -16,6 +16,10 @@ Các tài liệu 00–08 là kế hoạch/thiết kế gốc, không thay thế 
 
 ## Bản đồ source
 
+Bố cục header/menu/bàn chơi, hồ sơ chỉ đọc và sửa lỗi cloud/offline mới: [29](docs/29-sua-loi-va-bo-cuc-ban-choi.md).
+
+Chạy local/IDE/bootRun, import .env và lỗi thiếu SPRING_DATASOURCE_URL: [30](docs/30-chay-local-va-nap-env.md).
+
 ```text
 src/main/java/vn/edu/utc/tankbattle/
   auth/       tài khoản, JWT/Google, security và bootstrap admin
@@ -36,11 +40,11 @@ Engine tick chỉ dùng RAM; checkpoint/kết toán ghi theo lô ngoài tick. JP
 .\gradlew.bat spotlessApply
 .\gradlew.bat clean build
 .\tools\test-postgres.ps1 -ProductionSmoke
-.\gradlew.bat bootRun # Mặc định prod; cần biến DB/JWT/admin trước khi chạy.
+.\gradlew.bat bootRun # Mặc định prod/PostgreSQL; tự đọc .env tại thư mục gốc.
 ```
 
 Chỉ cần JDK 21; Wrapper tải Gradle/dependency. Không có Node/npm trong backend. Báo cáo JUnit dưới build/reports/tests; log PostgreSQL/smoke ở build/verification. Ứng dụng mặc định prod/PostgreSQL; H2 chỉ trong test. Dữ liệu H2 cũ trong .data và RSA trong secrets không bị xóa khi dọn build.
 
 Theo yêu cầu chủ đồ án, .env/render.env và toàn bộ secrets/ gồm cặp JWT PEM được phép commit; không in giá trị/key vào tài liệu/log. Docker loại env/key khỏi image. Render vẫn cần import env và thêm Secret Files. Không dùng Neon production chạy test.
 
-Database production neondb/schema tank_battle; direct endpoint cùng Hikari 5 kết nối, JDBC/JPA/Flyway thống nhất schema. Lượt UI đã chạy 81 test Java/build; số liệu PostgreSQL/prod smoke trước UI vẫn là 35 test và JAR trên DB test mới. Chưa chạy lại PostgreSQL hoặc Render cho UI. Đọc STATUS trước khi dùng số liệu này cho phiên bản source khác.
+Database production neondb/schema tank_battle; direct endpoint cùng Hikari 5 kết nối, JDBC/JPA/Flyway thống nhất schema. Lượt sửa bố cục/auth mới đã chạy 83 test Java, 39 test PostgreSQL riêng và prod-profile JAR smoke đạt. Luồng/ảnh/giới hạn trong tài liệu 29 và STATUS. Render từng health UP ở lượt review; thay đổi mới chưa push/deploy lên Render.

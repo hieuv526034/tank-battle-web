@@ -78,16 +78,4 @@ public class AccountService {
         entity.setPasswordHash(hash);
         return users.saveAndFlush(entity).getId();
     }
-
-    /**
-     * Cập nhật tên hiển thị sau khi chuẩn hóa và kiểm tra lại invariant ở service. UserId phải lấy
-     * từ danh tính đã xác thực tại controller; thao tác này giữ nguyên username và role.
-     * Transaction chỉ bao câu cập nhật hồ sơ.
-     */
-    @Transactional
-    public void rename(long id, String name) {
-        name = TextNormalizer.name(name);
-        ValidationRules.require(TextKind.DISPLAY_NAME, name);
-        users.rename(id, name);
-    }
 }

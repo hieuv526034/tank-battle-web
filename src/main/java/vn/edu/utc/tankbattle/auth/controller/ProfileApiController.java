@@ -3,18 +3,18 @@ package vn.edu.utc.tankbattle.auth.controller;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
-import vn.edu.utc.tankbattle.auth.dto.request.UpdateProfileRequest;
 import vn.edu.utc.tankbattle.auth.dto.response.UserResponse;
 import vn.edu.utc.tankbattle.auth.service.AccountService;
+import vn.edu.utc.tankbattle.common.constant.AppConstants.ValidateCode;
 import vn.edu.utc.tankbattle.common.documentation.StandardApiErrors;
 import vn.edu.utc.tankbattle.common.dto.ApiResponse;
+import vn.edu.utc.tankbattle.common.exception.BusinessException;
 import vn.edu.utc.tankbattle.common.i18n.ApiResponseFactory;
 
-/** Hồ sơ tài khoản thuộc auth, business chỉ dùng userId khi kiểm tra quyền. */
+/** Hồ sơ chỉ đọc thuộc auth; không có luồng cập nhật tên/username/quyền từ người chơi. */
 @RestController
 @RequestMapping("/api/profile")
 @Tag(name = "02. Hồ sơ")
@@ -29,14 +29,24 @@ public class ProfileApiController {
         this.responses = responses;
     }
 
+    /** Đọc lại dữ liệu từ DB của chính danh tính JWT, không nhận userId từ client. */
+    @GetMapping
+    @Operation(
+            summary = "Xem hồ sơ của tôi",
+            description =
+                    "Bearer API. Thông tin tài khoản chỉ được xem, không chỉnh sửa sau khi tạo.")
+    public ApiResponse<UserResponse> read(@AuthenticationPrincipal Jwt jwt) {
+        return responses.success(users.byUsername(jwt.getClaimAsString("username")));
+    }
+
+    /** Chặn cả client cũ gọi PUT; không bind body hoặc thực hiện bất kỳ câu UPDATE nào. */
     @PutMapping
     @Operation(
-            summary = "Đổi tên hiển thị",
+            summary = "Từ chối sửa hồ sơ",
             description =
-                    "Bearer API, không nhận userId/role; tên được chuẩn hóa trước validation.")
-    public ApiResponse<UserResponse> update(
-            @AuthenticationPrincipal Jwt jwt, @Valid @RequestBody UpdateProfileRequest request) {
-        users.rename(Long.parseLong(jwt.getSubject()), request.getDisplayName());
-        return responses.success(users.byUsername(jwt.getClaimAsString("username")));
+                    "Endpoint cũ được giữ để trả lỗi chuẩn HTTP 403/USER_007 (vi/en). "
+                            + "Mọi tài khoản, kể cả ADMIN, không được tự sửa tên/username/role.")
+    public ApiResponse<Void> rejectUpdate() {
+        throw BusinessException.of(ValidateCode.USER_PROFILE_READ_ONLY);
     }
 }

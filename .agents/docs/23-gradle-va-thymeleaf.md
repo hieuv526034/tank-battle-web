@@ -12,6 +12,10 @@ IntelliJ: Open thư mục gốc/build.gradle → Load Gradle Project → Distrib
 
 ## Lệnh Windows
 
+bootRun/IDE/JAR hiện tự đọc .env tại working directory qua ConfigData của prod; không cần plugin dotenv
+hoặc nạp shell trước. IDE chọn thư mục gốc/JDK 21. JWT dùng file:./secrets/... và cờ cookie HTTP local
+chỉ đặt trong .env; Render vẫn ưu tiên env thật/HTTPS. Đọc [30](30-chay-local-va-nap-env.md).
+
 ```powershell
 .\gradlew.bat spotlessApply
 .\gradlew.bat clean build
@@ -19,7 +23,7 @@ IntelliJ: Open thư mục gốc/build.gradle → Load Gradle Project → Distrib
 .\gradlew.bat test --tests "*SourceContractTest"
 .\gradlew.bat copyPostgresDriver
 .\tools\test-postgres.ps1 -ProductionSmoke
-.\gradlew.bat bootRun # Mặc định prod; cần biến DB/JWT/admin trước khi chạy.
+.\gradlew.bat bootRun # Mặc định prod/PostgreSQL; tự đọc .env tại thư mục gốc.
 ```
 
 Linux/macOS dùng ./gradlew; lần đầu chmod +x gradlew. Cần JDK 21; không tự tải JDK. build gồm Spotless, test và executable JAR. bootJar chỉ đóng gói, không thay bước test. Nếu chạy JAR trong build/libs, dừng đúng ứng dụng đó trước clean build để Windows giải phóng file.

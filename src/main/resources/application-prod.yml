@@ -1,5 +1,10 @@
 # Production tuyệt đối không có mật khẩu mặc định trong mã nguồn.
 spring:
+  config:
+    # IDE/bootRun/JAR chạy từ thư mục project đọc .env như file properties.
+    # Render không có file này và vẫn ưu tiên biến môi trường do Dashboard truyền vào.
+    # APP_ENV_FILE cho phép chọn file khác; test/smoke dùng fixture riêng, không đọc Neon.
+    import: "optional:file:${APP_ENV_FILE:./.env}[.properties]"
   lifecycle:
     # Render cho 30s trước SIGKILL; chừa thời gian cho coordinator flush queue/checkpoint.
     timeout-per-shutdown-phase: 10s
@@ -38,7 +43,8 @@ server:
   servlet:
     session:
       cookie:
-        secure: true
+        # Local HTTP đặt false trong .env; Render/HTTPS giữ mặc định true.
+        secure: ${SESSION_SECURE_COOKIE:true}
 # Tắt Swagger public theo mặc định; có thể bật rõ ràng cho môi trường demo.
 springdoc:
   api-docs:

@@ -2,6 +2,8 @@
 
 Cập nhật 21/10/2026. Đọc cùng [UI/offline](25-giao-dien-va-offline.md) và [STATUS](STATUS.md).
 
+Bố cục/focus hiện tại dùng header ngoài vùng cuộn và native dialog cho bàn chơi; đọc [29](29-sua-loi-va-bo-cuc-ban-choi.md).
+
 ## Bản đồ file và thứ tự đọc
 
 | File trong src/main/resources | Vai trò và điểm vào |
@@ -12,6 +14,7 @@ Cập nhật 21/10/2026. Đọc cùng [UI/offline](25-giao-dien-va-offline.md) v
 | static/js/api.js | CSRF, session web, JWT trong RAM, refresh, lỗi API và timeout. |
 | static/js/ui.js | Escape dữ liệu, icon/avatar, loading, thông báo, dialog và validation form. |
 | static/js/storage.js | IndexedDB: saves, results, meta; tách vùng guest/user và transaction. |
+| static/js/game-outcome.js | Quy tắc kết quả solo dùng chung cho overlay và lịch sử IndexedDB. |
 | static/js/offline-engine.js | Snapshot schema 2, RNG, tick, bot/địch, đạn, vật phẩm, wave và kết thúc. |
 | static/js/game-renderer.js | GameRenderer đọc state; GameControls hợp nhất keyboard/pointer; HUD/khung trận. |
 | static/js/online.js | RoomConnection: vé socket, sequence, sự kiện phòng/trận, sync và reconnect. |

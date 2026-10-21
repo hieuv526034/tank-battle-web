@@ -332,10 +332,15 @@ export class GameControls {
       ArrowRight: 'RIGHT'
     };
     const signal = this.controller.signal;
+    const root = document.querySelector('#battle-dialog');
     this.buttons = [...document.querySelectorAll('[data-direction], [data-fire]')];
     window.addEventListener('keydown', event => {
+      if (event.defaultPrevented || document.querySelector('#modal[open]') ||
+        !root?.open || !root.contains(event.target)) return;
       if (event.target instanceof Element &&
-        event.target.closest('input,select,textarea,dialog,[contenteditable=true]')) return;
+        event.target.closest('input,select,textarea,[contenteditable=true]')) return;
+      // Space trên nút/link phải kích hoạt đúng nút, không đồng thời bắn hoặc nuốt thao tác.
+      if (event.code === 'Space' && event.target.closest('button,a,summary')) return;
       if (!this.mapping[event.code] &&
         !['Space', 'KeyJ', 'KeyP', 'Escape'].includes(event.code)) return;
       event.preventDefault();
@@ -369,7 +374,7 @@ export class GameControls {
       element.addEventListener('pointerdown', event => {
         if (event.pointerType === 'mouse' && event.button !== 0) return;
         event.preventDefault();
-        if (document.querySelector('dialog[open]')) return;
+        if (document.querySelector('#modal[open]')) return;
         this.pointers.set(event.pointerId, {
           element,
           dpad: element.closest('.dpad'),
@@ -427,7 +432,7 @@ export class GameControls {
 
   /** Không gửi đầu vào cũ khi tab bị ẩn hoặc hộp thoại đang chặn trận. */
   read() {
-    if (document.hidden || document.querySelector('dialog[open]')) {
+    if (document.hidden || document.querySelector('#modal[open]')) {
       this.reset();
     }
     return {
@@ -456,107 +461,158 @@ export class GameControls {
 /** Dựng khung Canvas, HUD và cụm cảm ứng chung cho solo/online. */
 export function gameMarkup(title, offline = false) {
   return `
-    <div class="page-heading">
-      <div>
-        <div class="eyebrow">${offline ? 'SOLO · LƯU TRÊN THIẾT BỊ' : 'TRẬN ĐẤU ONLINE'}</div>
-        <h1>${esc(title)}</h1>
-      </div>
-      <div class="heading-actions">${
-        offline ? `
-        <button class="btn secondary small" data-action="save-solo">${icon('save')}Lưu trận</button>
-        <button class="icon-button" data-action="pause-solo" aria-label="Tạm dừng">${icon('pause')}</button>
-        ` : `
-        <a class="btn secondary small" data-link href="/rooms">${icon('users')}Sảnh chơi</a>
-        `
-      }</div>
-    </div>
-    <div class="game-layout">
-      <div class="game-stage">
-        <div class="battlefield">
-          <div class="game-topline">
-            <span class="tag">${icon(offline ? 'gamepad-2' : 'radio')}<span id="game-connection">${
-              offline ? 'SOLO' : 'ĐANG KẾT NỐI'
-            }</span>
-            </span>
-            <span id="game-time" class="game-time">00:00</span>
-            <span id="game-wave">THAO TRƯỜNG</span>
+    <dialog id="battle-dialog" class="battle-dialog" aria-labelledby="battle-title"
+      aria-describedby="battle-instructions">
+      <header class="battle-header">
+        <div class="battle-title">
+          <span class="battle-emblem">${icon('crosshair')}</span>
+          <div>
+            <div class="eyebrow">${offline ? 'SOLO · LƯU TRÊN THIẾT BỊ' : 'TRẬN ĐẤU ONLINE'}</div>
+            <h1 id="battle-title">${esc(title)}</h1>
           </div>
-          <canvas id="battle-canvas" width="768" height="576" tabindex="0"
-            aria-label="Bản đồ trận đấu. Dùng WASD hoặc phím mũi tên di chuyển, Space để bắn."></canvas>
-          <div class="pilot-hud" aria-label="Trạng thái của bạn">
-            <div class="pilot-health">${icon('heart')}<div>
-                <small>GIÁP XE</small>
-                <strong id="pilot-hp">—</strong>
-                <div id="pilot-healthbar" class="health-meter" role="progressbar" aria-label="Máu xe"
-                  aria-valuemin="0" aria-valuemax="3" aria-valuenow="0">
-                  <span></span>
+        </div>
+        <div class="battle-actions">${
+          offline ? `
+          <button class="btn secondary small" data-action="save-solo">${icon('save')}Lưu trận</button>
+          <button class="icon-button" data-action="pause-solo" aria-label="Tạm dừng hoặc tiếp tục trận">${icon('pause')}</button>
+          <a class="icon-button battle-exit" data-link href="/offline" aria-label="Lưu và rời trận">${icon('x')}</a>
+          ` : `
+          <a class="btn secondary small" data-link href="/rooms">${icon('arrow-left')}Về sảnh</a>
+          `
+        }</div>
+      </header>
+      <div class="game-layout">
+        <div class="game-stage">
+          <div class="board-space">
+            <div class="battlefield">
+              <div class="game-topline">
+                <span class="tag">${icon(offline ? 'gamepad-2' : 'radio')}<span id="game-connection">${
+                  offline ? 'SOLO' : 'ĐANG KẾT NỐI'
+                }</span>
+                </span>
+                <span id="game-time" class="game-time">00:00</span>
+                <span id="game-wave">THAO TRƯỜNG</span>
+              </div>
+              <canvas id="battle-canvas" width="768" height="576" tabindex="0"
+                aria-label="Bản đồ trận đấu. Dùng WASD hoặc phím mũi tên di chuyển, Space để bắn."></canvas>
+              <div class="pilot-hud" aria-label="Trạng thái của bạn">
+                <div class="pilot-health">${icon('heart')}<div>
+                    <small>GIÁP XE</small>
+                    <strong id="pilot-hp">—</strong>
+                    <div id="pilot-healthbar" class="health-meter" role="progressbar" aria-label="Máu xe"
+                      aria-valuemin="0" aria-valuemax="3" aria-valuenow="0">
+                      <span></span>
+                    </div>
+                  </div>
+                </div>
+                <div>${icon('trophy')}<div>
+                    <small>ĐIỂM TRẬN</small>
+                    <strong id="pilot-score">0</strong>
+                  </div>
+                </div>
+                <div>${icon('crosshair')}<div>
+                    <small>MỤC TIÊU</small>
+                    <strong id="pilot-kills">0</strong>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div>${icon('trophy')}<div>
-                <small>ĐIỂM TRẬN</small>
-                <strong id="pilot-score">0</strong>
-              </div>
-            </div>
-            <div>${icon('crosshair')}<div>
-                <small>MỤC TIÊU</small>
-                <strong id="pilot-kills">0</strong>
-              </div>
+              <div id="game-overlay" class="game-overlay hidden" role="status"></div>
             </div>
           </div>
-          <div id="game-overlay" class="game-overlay hidden" role="status"></div>
+          <div class="touch-controls" role="group" aria-label="Điều khiển cảm ứng">
+            <div class="dpad" role="group" aria-label="Hướng di chuyển">${
+              ['UP', 'LEFT', 'DOWN', 'RIGHT'].map((direction, index) => `
+              <button type="button" data-direction="${direction}" aria-label="${
+                ['Đi lên', 'Sang trái', 'Đi xuống', 'Sang phải'][index]
+              }">${icon('chevron-right', 'direction-arrow direction-' + direction.toLowerCase())}</button>
+              `).join('')
+            }</div>
+            <button type="button" class="fire-button" data-fire>${icon('crosshair')}
+              <br>BẮN
+            </button>
+          </div>
+          <div class="game-caption" id="battle-instructions">
+            <span>${
+              offline ? 'Tiến trình tự lưu mỗi 2 giây · Không cộng bảng hạng online' :
+                'Máy chủ quyết định vị trí, HP và kết quả'
+            }</span>
+            <span id="save-status" role="status">${offline ? 'Đang chuẩn bị bản lưu…' : 'Đang đồng bộ…'}</span>
+          </div>
         </div>
-        <div class="touch-controls" role="group" aria-label="Điều khiển cảm ứng">
-          <div class="dpad" role="group" aria-label="Hướng di chuyển">${
-            ['UP', 'LEFT', 'DOWN', 'RIGHT'].map((direction, index) => `
-            <button type="button" data-direction="${direction}" aria-label="${
-              ['Đi lên', 'Sang trái', 'Đi xuống', 'Sang phải'][index]
-            }">${icon('chevron-right', 'direction-arrow direction-' + direction.toLowerCase())}</button>
-            `).join('')
-          }</div>
-          <button type="button" class="fire-button" data-fire>${icon('crosshair')}
-            <br>BẮN
-          </button>
-        </div>
-        <div class="game-caption">
-          <span>${
-            offline ? 'Tiến trình tự lưu mỗi 2 giây · Không cộng bảng hạng online' :
-              'Máy chủ quyết định vị trí, HP và kết quả'
-          }</span>
-          <span id="save-status" role="status">${offline ? 'Đang chuẩn bị bản lưu…' : 'Đang đồng bộ…'}</span>
-        </div>
+        <aside class="game-side">
+          <div class="panel">
+            <h3>ĐỘI HÌNH CHIẾN ĐẤU</h3>
+            <div id="game-roster"></div>
+            <div id="game-buffs" class="game-buffs"></div>
+          </div>
+          <div class="panel">
+            <h3>ĐIỀU KHIỂN</h3>
+            <div class="game-keys">
+              <kbd>W A S D</kbd>
+              <span>Di chuyển</span>
+            </div>
+            <div class="game-keys">
+              <kbd>Space</kbd>
+              <span>Bắn</span>
+            </div>${offline ? '<div class="game-keys"><kbd>P</kbd><span>Tạm dừng</span></div>' : ''}<div class="divider">
+            </div>
+            <p class="muted" style="font-size:10px">${
+              offline ? 'Nhặt vật phẩm để hồi máu, tăng tốc, tăng sát thương hoặc nhận khiên.' :
+                'Mất mạng? Đăng nhập lại và xác nhận chơi tiếp trước thời hạn phục hồi.'
+            }</p>
+            <div class="item-legend" aria-label="Vật phẩm trên bản đồ">${
+              Object.values(itemLooks).map(look => `
+              <span>${icon(look.icon)}${esc(look.label)}</span>
+              `).join('')
+            }
+            </div>
+          </div>
+        </aside>
       </div>
-      <aside class="game-side">
-        <div class="panel">
-          <h3>ĐỘI HÌNH CHIẾN ĐẤU</h3>
-          <div id="game-roster"></div>
-          <div id="game-buffs" class="game-buffs"></div>
-        </div>
-        <div class="panel">
-          <h3>ĐIỀU KHIỂN</h3>
-          <div class="game-keys">
-            <kbd>W A S D</kbd>
-            <span>Di chuyển</span>
-          </div>
-          <div class="game-keys">
-            <kbd>Space</kbd>
-            <span>Bắn</span>
-          </div>${offline ? '<div class="game-keys"><kbd>P</kbd><span>Tạm dừng</span></div>' : ''}<div class="divider">
-          </div>
-          <p class="muted" style="font-size:10px">${
-            offline ? 'Nhặt vật phẩm để hồi máu, tăng tốc, tăng sát thương hoặc nhận khiên.' :
-              'Mất mạng? Đăng nhập lại và xác nhận chơi tiếp trước thời hạn phục hồi.'
-          }</p>
-          <div class="item-legend" aria-label="Vật phẩm trên bản đồ">${
-            Object.values(itemLooks).map(look => `
-            <span>${icon(look.icon)}${esc(look.label)}</span>
-            `).join('')
-          }
-          </div>
-        </div>
-      </aside>
-    </div>
+      <div class="battle-notices toasts" aria-live="polite" aria-atomic="false"></div>
+    </dialog>
     `;
+}
+
+/**
+ * Bàn chơi ở top layer của trình duyệt: nền bị inert, Tab không thoát sang menu.
+ * Tính bản đồ theo cả chiều rộng lẫn chiều cao còn lại, giữ đúng tỉ lệ 4:3.
+ * Observer chỉ chạy khi kích thước khung đổi, không đo layout trong mỗi tick.
+ */
+export function mountBattle() {
+  const dialog = document.querySelector('#battle-dialog');
+  const space = dialog.querySelector('.board-space');
+  const field = dialog.querySelector('.battlefield');
+  const canvas = dialog.querySelector('canvas');
+  const fit = () => {
+    const topHeight = dialog.querySelector('.game-topline').offsetHeight;
+    field.style.setProperty('--battle-topline', `${topHeight}px`);
+    const chromeHeight = topHeight +
+      dialog.querySelector('.pilot-hud').offsetHeight + 2;
+    const width = Math.max(0, Math.floor(Math.min(space.clientWidth,
+      (space.clientHeight - chromeHeight) * 4 / 3)));
+    field.style.width = `${width}px`;
+  };
+  const cancel = event => {
+    event.preventDefault();
+    // Escape chỉ tạm dừng solo; online phải dùng nút Về sảnh, không tự bỏ cuộc.
+    dialog.querySelector('[data-action=pause-solo]')?.click();
+  };
+  dialog.addEventListener('cancel', cancel);
+  dialog.showModal();
+  const observer = new ResizeObserver(fit);
+  observer.observe(space);
+  observer.observe(dialog.querySelector('.game-topline'));
+  observer.observe(dialog.querySelector('.pilot-hud'));
+  fit();
+  canvas.focus({
+    preventScroll: true
+  });
+  return () => {
+    observer.disconnect();
+    dialog.removeEventListener('cancel', cancel);
+    dialog.close();
+  };
 }
 // Khóa bằng chính element để cache tự thu hồi khi router dựng trận khác.
 const hudCache = new WeakMap();

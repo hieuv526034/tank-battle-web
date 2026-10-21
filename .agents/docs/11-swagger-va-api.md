@@ -26,7 +26,8 @@ Mọi REST operation `/api/**` và `/auth/**` có tham số header **Accept-Lang
 | POST /api/auth/socket-ticket                | SocketTicketResponse                     | Bearer+CSRF, dùng một lần/30s                             |
 | GET /auth/session                         | WebSessionResponse                       | Công khai, CSRF phiên web, no-store                       |
 | POST /auth/token                            | AuthTokenResponse                        | Session web+CSRF của session                              |
-| PUT /api/profile                            | UpdateProfileRequest → UserResponse      | Đổi tên của chính mình                                    |
+| GET /api/profile                            | UserResponse                             | Hồ sơ chính mình, chỉ xem                                 |
+| PUT /api/profile                            | Không bind body → lỗi USER_007            | Endpoint cũ: luôn 403, cấm sửa hồ sơ kể cả ADMIN             |
 | GET /api/rooms                              | List RoomResponse                        | Tối đa 40 phòng, member theo lô                           |
 | GET /api/rooms/current                      | RoomResponse hoặc null                   | Phòng của JWT hiện tại                                    |
 | POST /api/rooms                             | CreateRoomRequest → RoomResponse         | Tạo phòng và membership cùng transaction                  |

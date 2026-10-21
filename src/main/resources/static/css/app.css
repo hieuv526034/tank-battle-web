@@ -42,6 +42,9 @@ body {
   font-size: 14px;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
 }
 
 button,
@@ -203,7 +206,8 @@ small {
 /* 2. Khung trang, điều hướng và thanh công cụ. */
 .app-shell {
   display: flex;
-  min-height: 100vh;
+  height: 100%;
+  overflow: hidden;
 }
 
 .sidebar {
@@ -212,7 +216,7 @@ small {
   inset: 0 auto 0 0;
   display: flex;
   flex-direction: column;
-  padding: 32px 19px 20px;
+  padding: 26px 16px 18px;
   border-right: 1px solid var(--line);
   background: #161a16;
   z-index: 30;
@@ -222,7 +226,8 @@ small {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 0 9px 35px;
+  padding: 0 9px 22px;
+  flex-shrink: 0;
   line-height: 1.15;
 }
 
@@ -286,8 +291,8 @@ small {
 }
 
 .sidebar-bottom {
-  margin-top: auto;
-  padding-top: 30px;
+  flex-shrink: 0;
+  padding-top: 12px;
 }
 
 .offline-note {
@@ -368,10 +373,24 @@ small {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Header nằm ngoài scroll container; footer đi theo nội dung, không chiếm bàn chơi. */
+.content-scroll {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-gutter: stable;
 }
 
 .topbar {
-  height: 83px;
+  height: 76px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -379,6 +398,9 @@ small {
   padding: 0 38px;
   border-bottom: 1px solid var(--line);
   gap: 20px;
+  background: var(--bg);
+  position: relative;
+  z-index: 10;
 }
 
 .breadcrumb {
@@ -524,7 +546,7 @@ main {
   max-width: 1600px;
   width: 100%;
   margin: auto;
-  flex: 1;
+  flex: 1 0 auto;
   outline: none;
 }
 
@@ -2084,8 +2106,77 @@ details p {
 }
 
 .sidebar {
+  overflow: hidden;
+}
+
+/* Chỉ danh sách link cuộn khi màn hình thấp, luôn giữ brand và tài khoản dễ tìm. */
+.sidebar-navigation {
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   scrollbar-width: thin;
+}
+
+.nav-link .nav-text {
+  min-width: 0;
+}
+
+.nav-extra {
+  margin-left: auto;
+  display: inline-flex;
+}
+
+.menu-toggle {
+  display: inline-flex;
+}
+
+.topbar .breadcrumb {
+  margin-right: auto;
+}
+
+/* Desktop thu nhỏ thành rail; vẫn giữ icon/link có aria-label và title. */
+@media (min-width: 761px) and (min-height: 501px),
+(min-width: 1001px) {
+  :root[data-sidebar="compact"] {
+    --sidebar: 80px;
+  }
+
+  :root[data-sidebar="compact"] .sidebar {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  :root[data-sidebar="compact"] .brand {
+    padding-left: 7px;
+    padding-right: 7px;
+  }
+
+  :root[data-sidebar="compact"] :is(.brand-copy, .nav-text, .nav-mini, .nav-extra,
+    .offline-note, .sidebar-user-info) {
+    display: none;
+  }
+
+  :root[data-sidebar="compact"] .nav-label {
+    font-size: 0;
+    padding: 12px 0;
+    margin: 0 10px 5px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  :root[data-sidebar="compact"] .nav-link {
+    justify-content: center;
+    padding: 13px;
+  }
+
+  :root[data-sidebar="compact"] .sidebar-user {
+    flex-direction: column;
+    padding-top: 14px;
+  }
+
+  :root[data-sidebar="compact"] .sidebar-user .icon-button {
+    margin-left: 0;
+  }
 }
 
 /* 7. Bố cục thích ứng từ desktop xuống điện thoại. */
@@ -2994,6 +3085,34 @@ details p {
   color: var(--lime);
 }
 
+.account-details {
+  margin: 8px 0 18px;
+}
+
+.account-details>div {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.account-details dt {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.account-details dd {
+  margin: 5px 0 0;
+  overflow-wrap: anywhere;
+  font-weight: 700;
+}
+
+.account-readonly {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .game-stage {
   min-width: 0;
 }
@@ -3139,7 +3258,7 @@ details p {
 
 /* 9. Android/iOS: thanh địa chỉ co giãn, tai thỏ và vùng chạm an toàn. */
 .app-shell {
-  min-height: 100svh;
+  min-height: 0;
 }
 
 .sidebar {
@@ -3293,129 +3412,396 @@ details p {
   }
 }
 
-/* Xoay ngang điện thoại: bản đồ và hai cụm nút nằm cạnh nhau, không khóa hướng màn hình. */
-@media (orientation: landscape) and (max-height: 500px) and (max-width: 1000px) {
-  .topbar {
-    height: 48px;
-    min-height: calc(48px + env(safe-area-inset-top));
+/* 10. Bàn chơi tập trung: dialog top layer, không cuộn trang và không nhận phím nền. */
+.battle-dialog {
+  --bg: #111a15;
+  --panel: #18251d;
+  --panel-2: #203025;
+  --line: #354637;
+  --text: #f1f3e9;
+  --muted: #afbea9;
+  --lime: #c4f36b;
+  color-scheme: dark;
+  color: var(--text);
+  background: radial-gradient(ellipse at top, #203528, #101b15 70%);
+  border: 1px solid #4a6347;
+  border-radius: 20px;
+  box-shadow: 0 24px 100px #0009;
+  padding: 0;
+  margin: auto;
+  width: min(1440px, calc(100% - 48px));
+  height: calc(100% - 48px);
+  max-width: none;
+  max-height: none;
+  overflow: hidden;
+}
+
+.battle-dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.battle-dialog::backdrop {
+  background: #020704e8;
+  backdrop-filter: blur(5px);
+}
+
+.battle-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-shrink: 0;
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.battle-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.battle-title>div {
+  min-width: 0;
+}
+
+.battle-title h1 {
+  font-size: 18px;
+  line-height: 1.5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.battle-title .eyebrow {
+  font-size: 8px;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+
+.battle-emblem {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #7d9b5466;
+  border-radius: 12px;
+  background: #36532a66;
+  color: var(--lime);
+  flex-shrink: 0;
+}
+
+.battle-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.battle-dialog :is(.btn, .icon-button) {
+  min-height: 44px;
+}
+
+.battle-dialog .icon-button {
+  width: 44px;
+}
+
+.battle-dialog .btn.secondary {
+  background: #233327;
+  color: #ecf4e6;
+  border-color: #4a6347;
+}
+
+.battle-dialog .btn.primary {
+  background: #c4f36b;
+  color: #1b2513;
+}
+
+.battle-dialog .game-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  align-items: stretch;
+  gap: 18px;
+  padding: 18px;
+  flex: 1;
+  min-height: 0;
+}
+
+.battle-dialog .game-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto auto;
+  min-height: 0;
+  gap: 8px;
+}
+
+.board-space {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #080f0b80;
+}
+
+.battle-dialog .battlefield {
+  flex-shrink: 0;
+  max-width: 100%;
+  /* mountBattle gán width theo cả hai chiều của board-space, không cắt/méo Canvas. */
+  margin: 0;
+}
+
+.battle-dialog .game-topline {
+  padding: 8px 12px;
+  gap: 6px;
+  min-height: 40px;
+}
+
+.battle-dialog .pilot-hud {
+  padding: 8px 12px;
+}
+
+.battle-dialog .game-caption {
+  margin: 0;
+  font-size: 9px;
+}
+
+.battle-dialog .game-side {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.battle-dialog .game-side .panel {
+  background: #18251d;
+  border-color: #354637;
+  padding: 16px;
+}
+
+.battle-dialog .game-side .panel+.panel {
+  margin-top: 14px;
+}
+
+.battle-dialog .game-overlay {
+  inset: var(--battle-topline, 40px) 0 0;
+  padding: 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.battle-dialog .touch-controls {
+  grid-row: 2;
+  padding: 0 4px;
+}
+
+.battle-dialog .game-caption {
+  grid-row: 3;
+}
+
+.battle-dialog .touch-controls :is(.dpad button, .fire-button) {
+  background: #263b28;
+  color: #d1f79e;
+  border-color: #6b8552;
+}
+
+.battle-dialog .touch-controls :is(.dpad button.pressed, .fire-button.pressed) {
+  background: #c4f36b;
+  color: #182210;
+}
+
+.battle-dialog .battle-notices {
+  position: absolute;
+  bottom: 18px;
+  right: 18px;
+  pointer-events: none;
+  max-width: calc(100% - 36px);
+}
+
+.battle-dialog .toast {
+  background: #253526;
+  color: #f1f3e9;
+}
+
+@media (max-width: 1000px) {
+  .battle-dialog .game-layout {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  main.game-page {
-    padding-top: 8px;
-    padding-bottom: 8px;
-  }
-
-  .game-page .page-heading {
-    margin-bottom: 8px;
-    align-items: center;
-  }
-
-  .game-page .page-heading h1 {
-    font-size: 18px;
-  }
-
-  .game-page .eyebrow {
+  .battle-dialog .game-side {
     display: none;
   }
+}
 
-  .game-layout {
-    grid-template-columns: 1fr;
+@media (max-width: 760px) {
+  .battle-dialog {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .battle-header {
+    gap: 8px;
+    padding: max(8px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left));
+  }
+
+  .battle-title {
     gap: 8px;
   }
 
-  .game-side {
+  .battle-emblem {
     display: none;
   }
 
-  .game-stage {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 170px;
-    gap: 0 14px;
-    align-items: center;
-  }
-
-  .battlefield {
-    width: 100%;
-    max-width: calc((100dvh - 200px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * 4 / 3);
-    justify-self: center;
-  }
-
-  .game-topline {
-    padding: 4px 7px;
-    gap: 5px;
-    font-size: 8px;
-  }
-
-  .game-topline .tag {
-    padding: 2px 4px;
-    font-size: 7px;
-  }
-
-  .game-time {
+  .battle-title h1 {
     font-size: 14px;
   }
 
-  .pilot-hud {
-    padding: 5px 9px;
+  .battle-title .eyebrow {
+    font-size: 7px;
+    letter-spacing: .5px;
+  }
+
+  .battle-actions {
     gap: 5px;
   }
 
-  .pilot-hud>div {
+  .battle-actions .btn {
+    padding: 8px 10px;
+    font-size: 10px;
+  }
+
+  .battle-actions [data-action=save-solo] {
+    width: 44px;
+    padding: 8px;
+    font-size: 0;
+    gap: 0;
+  }
+
+  .battle-dialog .game-layout {
+    padding: 8px max(10px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+    gap: 0;
+  }
+
+  .battle-dialog .game-stage {
     gap: 6px;
   }
 
-  .pilot-hud>div+div {
-    padding-left: 8px;
+  .battle-dialog .game-caption>span:first-child {
+    display: none;
   }
 
-  .pilot-hud strong {
-    font-size: 12px;
+  .battle-dialog .game-caption {
+    justify-content: center;
   }
 
-  .pilot-hud small {
-    font-size: 6px;
+  .battle-dialog .game-overlay h2 {
+    font-size: 19px;
   }
 
-  .pilot-hud .icon {
-    width: 14px;
-    height: 14px;
+  .battle-dialog .game-overlay p {
+    font-size: 10px;
+    margin-bottom: 10px;
+  }
+}
+
+/* Màn hình ngang thấp: bản đồ bên trái, cảm ứng bên phải; không cuộn bàn chơi. */
+@media (orientation: landscape) and (max-height: 560px) {
+  .battle-dialog {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    border-radius: 0;
   }
 
-  .touch-controls {
+  .battle-header {
+    padding: max(4px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 4px max(12px, env(safe-area-inset-left));
+  }
+
+  .battle-title .eyebrow,
+  .battle-emblem,
+  .battle-dialog .game-side {
+    display: none;
+  }
+
+  .battle-title h1 {
+    font-size: 15px;
+  }
+
+  .battle-dialog .game-layout {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 6px max(10px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+  }
+
+  .battle-dialog .game-stage {
+    grid-template-columns: minmax(0, 1fr) 152px;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 4px 12px;
+  }
+
+  .battle-dialog .board-space {
+    grid-row: 1;
+  }
+
+  .battle-dialog .touch-controls {
+    grid-column: 2;
+    grid-row: 1;
     flex-direction: column;
-    gap: 10px;
-    padding: 0;
+    justify-content: center;
+    gap: 8px;
   }
 
-  .dpad {
+  .battle-dialog .dpad {
     grid-template: repeat(3, 44px) / repeat(3, 44px);
     gap: 2px;
   }
 
-  .fire-button {
+  .battle-dialog .fire-button {
     width: 64px;
     height: 64px;
     font-size: 10px;
   }
 
-  .game-caption {
+  .battle-dialog .game-caption {
     grid-column: 1 / -1;
-    margin-top: 6px;
+    grid-row: 2;
+    justify-content: center;
+  }
+
+  .battle-dialog .game-caption>span:first-child {
+    display: none;
+  }
+
+  .battle-dialog .game-topline {
+    min-height: 32px;
+    padding: 4px 8px;
     font-size: 8px;
   }
 
-  .game-overlay {
-    inset: 31px 0 0;
+  .battle-dialog .game-time {
+    font-size: 14px;
+  }
+
+  .battle-dialog .pilot-hud {
+    padding: 4px 9px;
+  }
+
+  .battle-dialog .pilot-hud strong {
+    font-size: 12px;
+  }
+
+  .battle-dialog .pilot-hud small {
+    font-size: 6px;
+  }
+
+  .battle-dialog .game-overlay {
+    inset: var(--battle-topline, 32px) 0 0;
     padding: 10px;
-    overflow-y: auto;
-  }
-
-  .game-overlay h2 {
-    font-size: 18px;
-  }
-
-  .game-overlay p {
-    font-size: 10px;
-    margin-bottom: 8px;
   }
 }

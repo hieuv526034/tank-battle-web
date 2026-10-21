@@ -4,6 +4,9 @@ Cập nhật 21/10/2026. Đọc [STATUS](STATUS.md) để phân biệt tính nă
 
 ## Stack và bố cục
 
+Bố cục mới: header cố định, content-scroll riêng, sidebar desktop thu gọn 80px và bàn chơi dialog nền tối.
+Ba lỗi của lượt rà soát đã sửa; luồng/giới hạn mới đọc [29](29-sua-loi-va-bo-cuc-ban-choi.md).
+
 Thymeleaf trả `templates/app.html`, ES modules ở `static/js`, CSS riêng và Canvas 2D. Giao diện tiếng Việt theo chủ đề trạm chỉ huy, nền tối/olive và màu lime, sidebar desktop/menu mobile, trạng thái tải/trống/lỗi, dialog và thông báo. Không có npm/package.json hoặc bước build frontend riêng.
 
 Lucide SVG 0.468.0 và Be Vietnam Pro Regular/Bold nằm trong source cùng giấy phép, không cần CDN khi online/offline. Nguồn và giấy phép đọc [THIRD_PARTY_NOTICES](../../THIRD_PARTY_NOTICES.md). Tank và cảnh hero là SVG tự viết.
@@ -16,7 +19,7 @@ Lucide SVG 0.468.0 và Be Vietnam Pro Regular/Bold nằm trong source cùng gi�
 | `/play/{id}` | Canvas/HUD online, kết nối lại, recovery, kết quả chính thức |
 | `/leaderboard` | Arena/Campaign theo độ khó, phân trang và hạng cá nhân |
 | `/history` | Lịch sử online riêng tư hoặc tối đa 20 kết quả solo trên máy |
-| `/profile` | Hồ sơ, đổi tên hiển thị, đăng xuất phiên API |
+| `/profile` | Hồ sơ chỉ xem, đăng xuất phiên API; không có form chỉnh sửa |
 | `/offline` | Chọn Arena/bot hoặc Campaign/cửa/độ khó/vị trí lưu |
 | `/saves` | Ba slot trên máy/đám mây, chơi tiếp, tải lên/về, xóa và xử lý xung đột |
 | `/help` | Điều khiển, luật, lưu/khôi phục và kiểm tra tài nguyên offline |

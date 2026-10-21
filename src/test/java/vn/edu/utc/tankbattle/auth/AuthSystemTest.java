@@ -465,6 +465,7 @@ class AuthSystemTest {
                         "/js/offline-engine.js",
                         "/js/game-renderer.js",
                         "/js/game-art.js",
+                        "/js/game-outcome.js",
                         "/icons/tank.svg",
                         "/icons/mode-online.svg",
                         "/icons/mode-campaign.svg",
@@ -535,6 +536,41 @@ class AuthSystemTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.username").value(username));
         mvc.perform(get("/api/rooms").session(authenticated)).andExpect(status().isUnauthorized());
+    }
+
+    /** Mô phỏng cookie jar trình duyệt: API JWT không được xóa CSRF trước POST xin vé socket. */
+    @Test
+    void bearerReadsPreserveCsrfCookieAndSocketTicketStillRequiresValidCsrf() throws Exception {
+        AuthenticatedApiClient client = registerAndLogin();
+        Cookie csrfCookie = client.csrfCookie();
+        for (String path : List.of("/api/auth/me", "/api/rooms")) {
+            MvcResult read =
+                    mvc.perform(
+                                    get(path)
+                                            .header(
+                                                    HttpHeaders.AUTHORIZATION,
+                                                    "Bearer " + client.accessToken())
+                                            .cookie(csrfCookie))
+                            .andExpect(status().isOk())
+                            .andReturn();
+            Cookie replacement = read.getResponse().getCookie("XSRF-TOKEN");
+            if (replacement != null) csrfCookie = replacement;
+            assertThat(csrfCookie.getMaxAge()).as("Bearer GET không xóa cookie CSRF").isNotZero();
+        }
+        mvc.perform(
+                        post("/api/auth/socket-ticket")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + client.accessToken())
+                                .cookie(csrfCookie)
+                                .header("X-XSRF-TOKEN", "wrong-csrf-fixture"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("AUTH_004"));
+        mvc.perform(
+                        post("/api/auth/socket-ticket")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + client.accessToken())
+                                .cookie(csrfCookie)
+                                .header("X-XSRF-TOKEN", client.csrfToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.ticket").isNotEmpty());
     }
 
     private AuthenticatedApiClient registerAndLogin() throws Exception {

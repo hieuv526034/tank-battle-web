@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <!-- Chạy prod trên máy phát triển: .env và secrets được tìm từ gốc project. -->
+  <configuration default="false" name="TankBattleApplication (prod local)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <module name="tank-battle-web.main" />
+    <option name="ACTIVE_PROFILES" value="prod" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="vn.edu.utc.tankbattle.TankBattleApplication" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

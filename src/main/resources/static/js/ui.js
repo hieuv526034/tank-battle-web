@@ -78,7 +78,9 @@ export function toast(message, error = false) {
     `
       ${icon(error ? 'circle-alert' : 'circle-check')}<span>${esc(message)}</span>
       `;
-  document.querySelector('#toasts').append(element);
+  // Toast trong trận phải nằm cùng top layer với dialog, không chìm sau nền tối/inert.
+  (document.querySelector('#battle-dialog[open] .battle-notices') ||
+    document.querySelector('#toasts')).append(element);
   setTimeout(() => element.remove(), error ? 9000 : 5000);
 }
 /** Dùng dialog native để giữ focus trong hộp thoại và chặn tương tác nền. */

@@ -1,6 +1,6 @@
-# Luồng backend và nghiệm thu trước UI
+# Luồng backend và kiểm thử hệ thống
 
-Đọc cùng [API](11-swagger-va-api.md), [STATUS](STATUS.md) và [Neon production](19-neon-production.md). Giao diện/Canvas/engine JS/IndexedDB/Service Worker đã có trong [tài liệu 25](25-giao-dien-va-offline.md); chưa nghiệm thu gameplay browser xuyên suốt.
+Đọc cùng [API](11-swagger-va-api.md), [STATUS](STATUS.md) và [Neon production](19-neon-production.md). Giao diện/Canvas/engine JS/IndexedDB/Service Worker đã có trong [tài liệu 25](25-giao-dien-va-offline.md). Đã kiểm browser solo/lưu/chơi tiếp/cloud và Campaign online một người trên môi trường thử riêng; bằng chứng mới nhất và các phần nhiều thiết bị/restart thật chưa nghiệm thu ở [29](29-sua-loi-va-bo-cuc-ban-choi.md).
 
 ## 1. Cách đọc source
 

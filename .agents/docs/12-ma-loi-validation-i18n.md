@@ -1,6 +1,6 @@
 # Mã lỗi, validation và bản dịch
 
-Nguồn chuẩn là common.constant.AppConstants.ValidateCode. Mỗi enum chứa tên miền nghiệp vụ, code public, message key và HTTP status. Tiền tố: SYS, AUTH, USER, ROOM, MATCH, GAME, SAVE, PAGE. Hiện có 46 mã, kiểm tra duy nhất và đủ bản dịch bằng Gradle/JUnit SourceContractTest.
+Nguồn chuẩn là common.constant.AppConstants.ValidateCode. Mỗi enum chứa tên miền nghiệp vụ, code public, message key và HTTP status. Tiền tố: SYS, AUTH, USER, ROOM, MATCH, GAME, SAVE, PAGE. Kiểm tra duy nhất và đủ bản dịch bằng Gradle/JUnit SourceContractTest. USER_007/user.profile.read_only/403 từ chối sửa hồ sơ sau khi tạo, đủ bản dịch vi/en.
 
 ## Cách dùng
 

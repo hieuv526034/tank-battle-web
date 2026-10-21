@@ -592,13 +592,9 @@ class BusinessFlowTest {
     @Test
     void profileAndOpenApiExposeActualBusinessContracts() throws Exception {
         ApiPlayer owner = player();
-        mvc.perform(
-                        put("/api/profile")
-                                .header(HttpHeaders.AUTHORIZATION, bearer(owner))
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content("{\"displayName\":\"  Sinh viên UTC  \"}"))
+        mvc.perform(get("/api/profile").header(HttpHeaders.AUTHORIZATION, bearer(owner)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.displayName").value("Sinh viên UTC"));
+                .andExpect(jsonPath("$.data.username").value(owner.username()));
         mvc.perform(
                         post("/api/auth/socket-ticket")
                                 .header(HttpHeaders.AUTHORIZATION, bearer(owner)))
@@ -644,6 +640,48 @@ class BusinessFlowTest {
             }
         }
         assertThat(operations).isGreaterThanOrEqualTo(34);
+    }
+
+    /** Cả API lẫn DB giữ nguyên tên/username/quyền khi client cũ cố gửi PUT sửa hồ sơ. */
+    @Test
+    void profileIsReadOnlyAndRejectsUpdatesWithLocalizedCode() throws Exception {
+        ApiPlayer owner = player();
+        Map<String, Object> before =
+                db.queryForMap(
+                        "SELECT username,display_name,role,password_hash,updated_at FROM users WHERE id=?",
+                        owner.id());
+        for (String locale : List.of("vi", "en")) {
+            mvc.perform(
+                            put("/api/profile")
+                                    .header(HttpHeaders.AUTHORIZATION, bearer(owner))
+                                    .header(HttpHeaders.ACCEPT_LANGUAGE, locale)
+                                    .contentType(MediaType.APPLICATION_JSON)
+                                    .content(
+                                            "{\"displayName\":\"Tên khác\",\"username\":\"other_user\",\"role\":\"ADMIN\"}"))
+                    .andExpect(status().isForbidden())
+                    .andExpect(jsonPath("$.code").value("USER_007"))
+                    .andExpect(jsonPath("$.messageKey").value("user.profile.read_only"))
+                    .andExpect(jsonPath("$.locale").value(locale))
+                    .andExpect(header().string(HttpHeaders.CACHE_CONTROL, "no-store"));
+        }
+        assertThat(
+                        db.queryForMap(
+                                "SELECT username,display_name,role,password_hash,updated_at FROM users WHERE id=?",
+                                owner.id()))
+                .isEqualTo(before);
+        mvc.perform(put("/api/profile").contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("AUTH_004"));
+        String adminToken = tokens.issue(accounts.credentials("admin")).access().accessToken();
+        String adminName = accounts.byUsername("admin").displayName();
+        mvc.perform(
+                        put("/api/profile")
+                                .header(HttpHeaders.AUTHORIZATION, "Bearer " + adminToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"displayName\":\"Tên quản trị khác\"}"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("USER_007"));
+        assertThat(accounts.byUsername("admin").displayName()).isEqualTo(adminName);
     }
 
     @Test

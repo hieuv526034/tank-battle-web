@@ -126,6 +126,7 @@ public final class AppConstants {
         USER_PASSWORD_INVALID("USER_004", "user.password.invalid", 400),
         USER_PASSWORD_MISMATCH("USER_005", "user.password.mismatch", 400),
         USER_USERNAME_TAKEN("USER_006", "user.username.taken", 409),
+        USER_PROFILE_READ_ONLY("USER_007", "user.profile.read_only", 403),
         ROOM_NOT_FOUND("ROOM_001", "room.not_found", 404),
         ROOM_NAME_INVALID("ROOM_002", "room.name.invalid", 400),
         ROOM_CAPACITY_INVALID("ROOM_003", "room.capacity.invalid", 400),
